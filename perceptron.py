@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # x input R^n
 inputDim = 2
 # y input R
-outDim = 1
+outDim = 2x
 
 w = np.zeros([outDim,inputDim+1]) #np.random.rand(outDim,inputDim+1)
 alfa = 0.1
