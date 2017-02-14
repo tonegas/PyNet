@@ -8,13 +8,12 @@ outDim = 1
 
 w = np.zeros([outDim,inputDim+1]) #np.random.rand(outDim,inputDim+1)
 alfa = 0.1
+dataVett = [[-1, -1], [0,1],[0,0],[1,1],[1,0],[5,5],[-5,5]]
+targetVett = [0,1,0,1,1,1,1]
+cVett=lambda t: 'r' if t>0.5 else 'b'
+dVett=lambda t: 20 if t>0.5 else 5
 
-dataVett = [[0,1],[0,0],[1,1],[1,0],[5,5],[-5,5]]
-targetVett = [1,0,1,1,1,1]
-cVett=lambda t: 'r' if t>0 else 'b'
-dVett=lambda t: 20 if t>0 else 5
-
-epochs = 5000
+epochs = 1000
 errors = []
 outputs = []
 wH = []
@@ -38,14 +37,15 @@ for epoch in xrange(epochs):
         y2 = sigmoid(y1)
         outputs.append(y2)
         #step 3
-        err = t-y2
+        err = y2-t
         errors.append(err)
-        grad = siggrad(y1)
         #grad = x
-        #grad = (y2*(1-y2))
-        aw = alfa * x1 * err * siggrad(y1)
+        grad = siggrad(y1)
+        aw = alfa * x1 * err * grad
         wH.append(w.tolist())
         w = w + aw
+
+print outputs
 
 plt.subplot(131)
 plt.scatter([x[0] for x in dataVett],[x[1] for x in dataVett],c=[cVett(t) for t in outputs],s=[dVett(t) for t in targetVett])
