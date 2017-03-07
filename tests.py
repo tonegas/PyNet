@@ -2,7 +2,9 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-from framework import LinearLayer, ReluLayer, SigmoidLayer, SoftMaxLayer, SquaredLoss, Sequential
+from layers import LinearLayer, ReluLayer, SigmoidLayer, SoftMaxLayer
+from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
+from sequential import Sequential
 
 class LinearLayerTests(unittest.TestCase):
     def test_dim(self):
@@ -48,7 +50,7 @@ class LinearLayerTests(unittest.TestCase):
             aux[i] = in_delta[i]
             delta = l.backward(aux)
             gradient = l.numeric_gradient(x)
-            assert_almost_equal(in_delta[i]*gradient[i,:],delta)
+            assert_almost_equal(in_delta[i]*gradient[i,:],delta,decimal=5)
 
 class ReluLayerTests(unittest.TestCase):
     def test_forward_backward(self):
@@ -59,7 +61,7 @@ class ReluLayerTests(unittest.TestCase):
         x = np.random.rand(2)
         d = l.backward(x)
         self.assertEqual(d.shape,(2,))
-        assert_almost_equal(d,np.array(x))
+        assert_almost_equal(d,np.array(x),decimal=5)
         return
 
     def test_numeric_gradient(self):
@@ -68,7 +70,7 @@ class ReluLayerTests(unittest.TestCase):
         gradient = l.numeric_gradient(x)
         l.forward(x)
         delta = l.backward([1,1])
-        assert_almost_equal(np.diag(gradient),delta)
+        assert_almost_equal(np.diag(gradient),delta,decimal=5)
 
 
 class SigmoidLayerTests(unittest.TestCase):
@@ -76,10 +78,10 @@ class SigmoidLayerTests(unittest.TestCase):
         l = SigmoidLayer()
         y = l.forward(np.array([5,5]))
         self.assertEqual(y.shape,(2,))
-        assert_almost_equal(y,np.array([0.993307, 0.993307]))
+        assert_almost_equal(y,np.array([0.993307, 0.993307]),decimal=5)
         d = l.backward(np.array([2,3]))
         self.assertEqual(d.shape,(2,))
-        assert_almost_equal(d,np.array([0.0132961, 0.0199442]))
+        assert_almost_equal(d,np.array([0.0132961, 0.0199442]),decimal=5)
         return
 
     def test_numeric_gradient(self):
@@ -95,7 +97,7 @@ class SoftMaxLayerTests(unittest.TestCase):
         l = SoftMaxLayer()
         y = l.forward(np.array([5,5,6]))
         self.assertEqual(y.shape,(3,))
-        assert_almost_equal(y,np.array([ 0.2119416,  0.2119416,  0.5761169]))
+        assert_almost_equal(y,np.array([ 0.2119416,  0.2119416,  0.5761169]),decimal=5)
         assert_array_equal(1,np.sum(y))
         d = l.backward(np.array([2,3,6]))
         self.assertEqual(d.shape,(3,))
@@ -112,7 +114,120 @@ class SoftMaxLayerTests(unittest.TestCase):
             l.forward(x)
             delta = l.backward(aux_delta)
             gradient = l.numeric_gradient(x)
-            assert_almost_equal(in_delta[i]*gradient[i,:],delta)
+            assert_almost_equal(in_delta[i]*gradient[i,:],delta,decimal=5)
+
+class NegativeLogLikelihoodLossTests(unittest.TestCase):
+    def test_calc_loss(self):
+        l1 = SoftMaxLayer()
+        n = Sequential([l1])
+        x = np.array([15.0,10.0,2.0])
+        y = n.forward(x)
+        self.assertEqual(y.shape,(3,))
+        nll = NegativeLogLikelihoodLoss()
+        t = np.array([0.0,0.0,1.0])
+        self.assertEqual(y.shape,t.shape)
+        J = nll.calc_loss(y,t)
+        self.assertEqual(J.shape,(3,))
+        assert_almost_equal(J,[0.0,0.0,13.0067176],decimal=5)
+
+    def test_calc_delta(self):
+        l1 = SoftMaxLayer()
+        n = Sequential([l1])
+        x = np.array([15.0,10.0,2.0])
+        y = n.forward(x)
+        self.assertEqual(y.shape,(3,))
+        nll = NegativeLogLikelihoodLoss()
+        t = np.array([0.0,0.0,1.0])
+        self.assertEqual(y.shape,t.shape)
+        J = nll.calc_loss(y,t)
+        self.assertEqual(J.shape,(3,))
+        assert_almost_equal(J,[0.0,0.0,13.0067176],decimal=5)
+        delta_in = -nll.calc_gradient(y,t)
+        assert_almost_equal(delta_in,[0.0,0.0,445395.349996],decimal=5)
+        delta_out = n.backward(delta_in)
+        assert_almost_equal(delta_out,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
+
+    def test_numeric_gradient(self):
+        nll = NegativeLogLikelihoodLoss()
+        y = np.random.rand(2)
+        t = np.random.rand(2)
+        nll.calc_loss(y,t)
+        gradient = nll.numeric_gradient(y)
+        delta = nll.backward(y)
+        assert_almost_equal(np.diag(gradient),delta,decimal=5)
+
+
+class CrossEntropyLossTests(unittest.TestCase):
+    def test_calc_loss(self):
+        l1 = SoftMaxLayer()
+        n = Sequential([l1])
+        x = np.array([15.0,10.0,2.0])
+
+        y = n.forward(x)
+        self.assertEqual(y.shape,(3,))
+        nll = NegativeLogLikelihoodLoss()
+        t = np.array([0.0,0.0,1.0])
+        self.assertEqual(y.shape,t.shape)
+        J1 = nll.calc_loss(y,t)
+        self.assertEqual(J1.shape,(3,))
+        assert_almost_equal(J1,[0.0,0.0,13.0067176],decimal=5)
+
+        cel = CrossEntropyLoss()
+        t = np.array([0.0,0.0,1.0])
+        J2 = cel.calc_loss(x,t)
+        self.assertEqual(J2.shape,(3,))
+        assert_almost_equal(J2,[0.0,0.0,13.0067176],decimal=5)
+
+        assert_almost_equal(J1,J2)
+
+    def test_calc_delta(self):
+        l1 = SoftMaxLayer()
+        n = Sequential([l1])
+        x = np.array([15.0,10.0,2.0])
+        y = n.forward(x)
+        self.assertEqual(y.shape,(3,))
+        nll = NegativeLogLikelihoodLoss()
+        t = np.array([0.0,0.0,1.0])
+        self.assertEqual(y.shape,t.shape)
+        J1 = nll.calc_loss(y,t)
+        self.assertEqual(J1.shape,(3,))
+        assert_almost_equal(J1,[0.0,0.0,13.0067176],decimal=5)
+
+        cel = CrossEntropyLoss()
+        t = np.array([0.0,0.0,1.0])
+        J2 = cel.calc_loss(x,t)
+        self.assertEqual(J2.shape,(3,))
+        assert_almost_equal(J2,[0.0,0.0,13.0067176],decimal=5)
+
+        delta_in = -nll.calc_gradient(y,t)
+        assert_almost_equal(delta_in,[0.0,0.0,445395.349996])
+        delta_out1 = n.backward(delta_in)
+        assert_almost_equal(delta_out1,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
+        #
+        cel.calc_gradient(x,t)
+        delta_out2 = cel.backward(x)
+        assert_almost_equal(delta_out2,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
+
+    # def test_numeric_gradient(self):
+    #     cel = CrossEntropyLoss()
+    #     y = np.random.rand(2)
+    #     t = np.random.rand(2)
+    #     cel.calc_loss(y,t)
+    #     gradient = cel.numeric_gradient(y)
+    #     delta = cel.backward(y)
+    #     assert_almost_equal(gradient,delta)
+
+    # def test_calc_delta(self, y, t):
+    #     #the gradient is positive but delta is negative
+    #     return t/y
+
+# class CrossEntropyLossTests(unittest.TestCase):
+#     def calc_loss(self, y, t):
+#         totlog = np.log(np.sum(np.exp(y)))
+#         return t*(totlog - y)
+#
+#     def calc_delta(self, y, t):
+#         return y-t
 
 class SequentialTests(unittest.TestCase):
     def test_LinearLayer(self):
@@ -143,16 +258,16 @@ class SequentialTests(unittest.TestCase):
         self.assertEqual(d.shape,(1,))
         assert_array_equal(d,np.array([0.25]))
 
-    def test_SquaredLoss(self):
-        errSq = SquaredLoss()
-        n = Sequential([errSq])
-        y = n.forward(np.array([0]))
-        self.assertEqual(y.shape,(1,))
-        assert_array_equal(y,np.array([0]))
-
-        d = n.backward(np.array([5.4]))
-        self.assertEqual(d.shape,(1,))
-        assert_array_equal(d,np.array([5.4]))
+    # def test_SquaredLoss(self):
+    #     errSq = SquaredLoss()
+    #     n = Sequential([errSq])
+    #     y = n.forward(np.array([0]))
+    #     self.assertEqual(y.shape,(1,))
+    #     assert_array_equal(y,np.array([0]))
+    #
+    #     d = n.backward(np.array([5.4]))
+    #     self.assertEqual(d.shape,(1,))
+    #     assert_array_equal(d,np.array([5.4]))
 
 
 
