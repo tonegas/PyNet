@@ -97,4 +97,9 @@ ENV/
 
 # ide
 .idea
-
+.idea/.name
+.idea/NeuralNetwork.iml
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
