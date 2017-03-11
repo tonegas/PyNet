@@ -26,16 +26,16 @@ class LinearLayerTests(unittest.TestCase):
     def test_update(self):
         l = LinearLayer(2,6,'ones')
         y = l.forward(np.array([2.0,2.0]))
-        dW = l.update(np.array([1.0,2.0,3.0,4.0,1.0,1.0]))
+        dJdW = l.dJdW_gradient(np.array([1.0,2.0,3.0,4.0,1.0,1.0]))
         self.assertEqual(l.W.shape,(6,3))
-        self.assertEqual(dW.shape,(6,3))
+        self.assertEqual(dJdW.shape,(6,3))
 
         l = LinearLayer(2,3,'ones')
         y = l.forward(np.array([2.0,2.0]))
-        dW = l.update(np.array([1.0,2.0,3.0]))
+        dJdW = l.dJdW_gradient(np.array([1.0,2.0,3.0]))
         self.assertEqual(l.W.shape,(3,3))
-        self.assertEqual(dW.shape,(3,3))
-        assert_array_equal(dW,np.matrix([[2.0,2.0,1.0],[4.0,4.0,2.0],[6.0,6.0,3.0]]))
+        self.assertEqual(dJdW.shape,(3,3))
+        assert_array_equal(dJdW,np.matrix([[2.0,2.0,1.0],[4.0,4.0,2.0],[6.0,6.0,3.0]]))
 
     def test_numeric_gradient(self):
         l = LinearLayer(2,3,'random')
@@ -126,7 +126,7 @@ class NegativeLogLikelihoodLossTests(unittest.TestCase):
         nll = NegativeLogLikelihoodLoss()
         t = np.array([0.0,0.0,1.0])
         self.assertEqual(y.shape,t.shape)
-        J = nll.calc_loss(y,t)
+        J = nll.loss(y,t)
         self.assertEqual(J.shape,(3,))
         assert_almost_equal(J,[0.0,0.0,13.0067176],decimal=5)
 
@@ -139,10 +139,11 @@ class NegativeLogLikelihoodLossTests(unittest.TestCase):
         nll = NegativeLogLikelihoodLoss()
         t = np.array([0.0,0.0,1.0])
         self.assertEqual(y.shape,t.shape)
-        J = nll.calc_loss(y,t)
+        J = nll.loss(y,t)
         self.assertEqual(J.shape,(3,))
         assert_almost_equal(J,[0.0,0.0,13.0067176],decimal=5)
-        delta_in = -nll.calc_gradient(y,t)
+
+        delta_in = -nll.dJdy_gradient(y,t)
         assert_almost_equal(delta_in,[0.0,0.0,445395.349996],decimal=5)
         delta_out = n.backward(delta_in)
         assert_almost_equal(delta_out,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
@@ -151,10 +152,10 @@ class NegativeLogLikelihoodLossTests(unittest.TestCase):
         nll = NegativeLogLikelihoodLoss()
         y = np.random.rand(2)
         t = np.random.rand(2)
-        nll.calc_loss(y,t)
+        nll.loss(y,t)
         gradient = nll.numeric_gradient(y)
-        delta = nll.backward(y)
-        assert_almost_equal(np.diag(gradient),delta,decimal=5)
+        dJdy = nll.dJdy_gradient(y,t)
+        assert_almost_equal(np.diag(gradient),dJdy,decimal=5)
 
 
 class CrossEntropyLossTests(unittest.TestCase):
@@ -168,13 +169,13 @@ class CrossEntropyLossTests(unittest.TestCase):
         nll = NegativeLogLikelihoodLoss()
         t = np.array([0.0,0.0,1.0])
         self.assertEqual(y.shape,t.shape)
-        J1 = nll.calc_loss(y,t)
+        J1 = nll.loss(y,t)
         self.assertEqual(J1.shape,(3,))
         assert_almost_equal(J1,[0.0,0.0,13.0067176],decimal=5)
 
         cel = CrossEntropyLoss()
         t = np.array([0.0,0.0,1.0])
-        J2 = cel.calc_loss(x,t)
+        J2 = cel.loss(x,t)
         self.assertEqual(J2.shape,(3,))
         assert_almost_equal(J2,[0.0,0.0,13.0067176],decimal=5)
 
@@ -189,23 +190,23 @@ class CrossEntropyLossTests(unittest.TestCase):
         nll = NegativeLogLikelihoodLoss()
         t = np.array([0.0,0.0,1.0])
         self.assertEqual(y.shape,t.shape)
-        J1 = nll.calc_loss(y,t)
+        J1 = nll.loss(y,t)
         self.assertEqual(J1.shape,(3,))
         assert_almost_equal(J1,[0.0,0.0,13.0067176],decimal=5)
 
         cel = CrossEntropyLoss()
         t = np.array([0.0,0.0,1.0])
-        J2 = cel.calc_loss(x,t)
+        J2 = cel.loss(x,t)
         self.assertEqual(J2.shape,(3,))
         assert_almost_equal(J2,[0.0,0.0,13.0067176],decimal=5)
 
-        delta_in = -nll.calc_gradient(y,t)
+        delta_in = -nll.dJdy_gradient(y,t)
         assert_almost_equal(delta_in,[0.0,0.0,445395.349996])
         delta_out1 = n.backward(delta_in)
         assert_almost_equal(delta_out1,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
         #
-        cel.calc_gradient(x,t)
-        delta_out2 = cel.backward(x)
+
+        delta_out2 = -cel.dJdy_gradient(x,t)
         assert_almost_equal(delta_out2,[-0.9933049, -0.0066928,  0.9999978],decimal=5)
 
     # def test_numeric_gradient(self):
