@@ -2,6 +2,9 @@ import numpy as np
 
 
 class GenericLayer:
+    def __init__(self):
+        self.group = False
+
     def numeric_gradient(self,x):
         dx = 0.00000001
         fx = self.forward(x)

@@ -4,6 +4,7 @@ from genericlayer import GenericLayer
 
 class Sequential(GenericLayer):
     def __init__(self, layers = None):
+        self.group = True
         self.layers = [] if layers is None else layers
 
     def add(self,layer):
@@ -13,34 +14,37 @@ class Sequential(GenericLayer):
         aux_x = x
         for layer in self.layers:
             aux_x = layer.forward(aux_x)
-
         return aux_x
 
-    def backward(self, dJdy, optimizer = False):
+    def backward(self, dJdy):
         aux_dJdy = dJdy
         for layer in reversed(self.layers):
-            aux_dJdx = layer.backward(aux_dJdy)
-            if hasattr(layer,'dJdW_gradient') and optimizer and hasattr(optimizer, 'update'):
-                optimizer.update(layer, layer.dJdW_gradient(aux_dJdy))
-
-            aux_dJdy = aux_dJdx
+            aux_dJdy = layer.backward(aux_dJdy)
 
         return aux_dJdy
 
-    def learn_one(self, input, target, loss, optimizer):
-        y = self.forward(input)
-        J = loss.loss(y,target)
-        dJdy = loss.dJdy_gradient(y,target)
-        self.backward(dJdy, optimizer)
-        return J, dJdy
+class Parallel(GenericLayer):
+    def __init__(self, elements = None):
+        self.vect_size = []
+        self.group = True
+        self.elements = [] if elements is None else elements
 
-    def learn(self, input_data, target_data, loss, optimizer, epochs):
-        J_list = np.zeros(epochs)
-        dJdy_list = np.zeros(epochs)
-        for epoch in range(epochs):
-            for x,t in izip(input_data,target_data):
-                J, dJdy = self.learn_one(x, t, loss, optimizer)
-                J_list[epoch] = np.sum(np.abs(J))
-                dJdy_list[epoch] = np.sum(dJdy)
+    def add(self,element):
+        self.elements.append(element)
 
-        return J_list, dJdy_list
+    def forward(self,x):
+        aux_y = []
+        for element in self.elements:
+            y = element.forward(x)
+            self.vect_size.append(y.size)
+            aux_y.append(y)
+        return np.concatenate(aux_y,axis=0)
+
+    def backward(self, dJdy):
+        aux_dJdy = []
+        a = 0
+        for ind,element in enumerate(self.elements):
+            b = a+self.vect_size[ind]
+            aux_dJdy.append(element.backward(dJdy[a:b]))
+            a = b
+        return np.sum(np.array(aux_dJdy),0)

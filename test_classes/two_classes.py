@@ -8,28 +8,21 @@ from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, UnitStepLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
 from sequential import Sequential
+from trainer import Trainer
+from printers import Printer2D
 
 classes = ["o","v","x","."]
 colors = ['r', 'g', 'b', 'y', 'o']
-num_class = 2
-
-def print_data(figure, train_data, train_targets, colors, classes):
-    x = range(num_class)
-    y = range(num_class)
-    for type in range(num_class):
-        x[type] = [point[0] for i, point in enumerate(train_data) if train_targets[i] == type]
-        y[type] = [point[1] for i, point in enumerate(train_data) if train_targets[i] == type]
-
-    plt.figure(figure)
-    for type in range(num_class):
-        plt.scatter(x[type], y[type], s=100, color=colors[type], marker=classes[type])
+num_classes = 2
+p = Printer2D()
+plt.close()
 
 def gen_data():
     n = 100
 
     # N clusters:
     data, targets = datasets.make_classification(
-        n_samples=n, n_features=2, n_informative=2, n_redundant=0, n_classes=num_class, class_sep=3.0, n_clusters_per_class=1)
+        n_samples=n, n_features=2, n_informative=2, n_redundant=0, n_classes=num_classes, class_sep=1.0, n_clusters_per_class=1)
 
     # Circles:
     # data, targets = datasets.make_circles(
@@ -58,11 +51,14 @@ class Perceptron(unittest.TestCase):
         for i, (x,target) in enumerate(izip(train_data, train_targets)):
             y[i] = int(np.round(model.forward(x)))
 
-        print_data(1, train_data, train_targets, ['gray','gray'], classes)
-        print_data(1, train_data, y, colors, ['x','x'])
+        p.print_data(1, train_data, p.to_one_hot_vect(train_targets,2), 2, ['gray','gray'], classes)
+        p.print_data(1, train_data, p.to_one_hot_vect(y,2), 2, colors, ['x','x'])
         plt.title('Before Training')
 
-        J_list, dJdy_list = model.learn(
+        trainer = Trainer()
+
+        J_list, dJdy_list = trainer.learn(
+            model = model,
             input_data = train_data,
             target_data = train_targets,
             loss = SquaredLoss(),
@@ -70,7 +66,7 @@ class Perceptron(unittest.TestCase):
                     # optimizer=MomentumSGD(learning_rate=0.1, momentum=0.9),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 15)
+            epochs = 30)
 
         y1 = np.zeros(train_data.size)
         for i, (x,target) in enumerate(izip(train_data, train_targets)):
@@ -80,10 +76,12 @@ class Perceptron(unittest.TestCase):
         for i, (x,target) in enumerate(izip(test_data, test_targets)):
             y2[i] = int(np.round(model.forward(x)))
 
-        print_data(2, train_data, train_targets, ['gray','gray'], classes)
-        print_data(2, train_data, y1, colors, ['x','x'])
-        print_data(2, test_data, y2, colors, ['.','.'])
+        p.print_data(2, train_data, p.to_one_hot_vect(train_targets,2), 2, ['gray','gray'], classes)
+        p.print_data(2, train_data, p.to_one_hot_vect(y1,2), 2, colors, ['x','x'])
+        p.print_data(2, test_data, p.to_one_hot_vect(y2,2), 2, colors, ['.','.'])
         plt.title('After Training')
+
+        p.print_model(100, model, test_data)
 
         plt.figure(3)
         plt.title('Errors History (J)')
