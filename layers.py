@@ -31,7 +31,9 @@ class LinearLayer(GenericLayer):
 
 class SoftMaxLayer(GenericLayer):
     def forward(self, x):
+        # print 'xS'+str(x)
         exp_x = np.exp(x-np.max(x))
+        # print 'exp_x'+str(exp_x)
         self.y = exp_x/np.sum(exp_x)
         return self.y
 
@@ -45,11 +47,11 @@ class SoftMaxLayer(GenericLayer):
 
 class UnitStepLayer(GenericLayer):
     def forward(self, x):
-        self.y = 1 if x>= 0 else 0
+        self.y = (x >= 0)*1.0
         return self.y
 
     def backward(self, dJdy):
-        return (-1 if self.y == 0 else 1)*dJdy
+        return ((self.y > 0)*1.0+(self.y <= 0)*-1.0)*dJdy
 
 class SigmoidLayer(GenericLayer):
     def forward(self, x):
@@ -65,4 +67,4 @@ class ReluLayer(GenericLayer):
         return np.maximum(0,x)
 
     def backward(self, dJdy):
-        return np.maximum(0,self.x > 0)*dJdy
+        return np.maximum(-1,self.x > 0)*dJdy

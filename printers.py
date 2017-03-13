@@ -23,7 +23,10 @@ class Printer2D():
                 z_array_out = z_array[:,exit]
                 Z = z_array_out.reshape(X.shape)
                 plt.subplot(z_array.shape[1], 1, exit+1)
-                CS = plt.contour(X, Y, Z)
+                try:
+                    CS = plt.contour(X, Y, Z)
+                except ValueError:
+                    pass
 
     def compare_data(self, figure_ind, data, targets, output, num_classes, classes):
         x = range(num_classes)
@@ -43,8 +46,8 @@ class Printer2D():
                     x[np.argmax(targets[i])].append(point[0])
                     y[np.argmax(targets[i])].append(point[1])
                 else:
-                    x_err[np.argmax(output[i])].append(point[0])
-                    y_err[np.argmax(output[i])].append(point[1])
+                    x_err[np.argmax(targets[i])].append(point[0])
+                    y_err[np.argmax(targets[i])].append(point[1])
 
         plt.figure(figure_ind)
         for type in range(num_classes):

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 
-from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, ReluLayer, SoftMaxLayer, SigmoidLayer, UnitStepLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
 from network import Sequential
@@ -22,7 +22,7 @@ def gen_data():
 
     # N clusters:
     data, targets = datasets.make_classification(
-        n_samples=n, n_features=2, n_informative=2, n_redundant=0, n_classes=num_classes, class_sep=1.0, n_clusters_per_class=1)
+        n_samples=n, n_features=2, n_informative=2, n_redundant=0, n_classes=num_classes, class_sep=2.0, n_clusters_per_class=1)
 
     # Circles:
     # data, targets = datasets.make_circles(
@@ -31,8 +31,8 @@ def gen_data():
     # Moons:
     # data, targets = datasets.make_moons(n_samples=n, shuffle=True, noise=0.05)
 
-    train_data, test_data = data[:n / 2], data[n / 2:]
-    train_targets, test_targets = targets[:n / 2], targets[n / 2:]
+    train_data, test_data = np.array(data[:n / 2]).astype(np.float), np.array(data[n / 2:]).astype(np.float)
+    train_targets, test_targets = np.array(targets[:n / 2]).astype(np.float), np.array(targets[n / 2:]).astype(np.float)
 
     return train_data, train_targets, test_data, test_targets
 
@@ -44,7 +44,7 @@ class Perceptron(unittest.TestCase):
 
         model = Sequential([
             LinearLayer(2, 1, weights='random'),
-            SigmoidLayer()
+            SigmoidLayer(),
         ])
 
         y = np.zeros(train_data.size)
@@ -66,7 +66,7 @@ class Perceptron(unittest.TestCase):
                     # optimizer=MomentumSGD(learning_rate=0.1, momentum=0.9),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 30)
+            epochs = 20)
 
         y1 = np.zeros(train_data.size)
         for i, (x,target) in enumerate(izip(train_data, train_targets)):
