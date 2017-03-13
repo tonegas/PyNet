@@ -4,7 +4,7 @@ from numpy.testing import assert_array_equal, assert_almost_equal
 
 from layers import LinearLayer, ReluLayer, SigmoidLayer, SoftMaxLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from sequential import Sequential
+from network import Sequential
 
 class LinearLayerTests(unittest.TestCase):
     def test_dim(self):

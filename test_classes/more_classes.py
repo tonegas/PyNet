@@ -7,7 +7,7 @@ from sklearn import datasets
 from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, UnitStepLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
-from sequential import Sequential, Parallel
+from network import Sequential, Parallel
 from trainer import Trainer
 from printers import Printer2D
 
