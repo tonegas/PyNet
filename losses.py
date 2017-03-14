@@ -23,8 +23,8 @@ class NegativeLogLikelihoodLoss(GenericLayer):
         #ly = np.log(y)
         #np.putmask(ly,ly<-10.0**30,-10.0**30)
         # print 'log'+str(np.maximum(np.log(y),-10.0**30))
-        return -t*np.log(np.maximum(y,0.000001))
-        # return -t*ly
+        return -t*np.log(np.maximum(y,0.0000001))
+        # return -t*np.log(y)
 
     def dJdy_gradient(self, y, t):
         return -t/(np.maximum(y,0.000001))
@@ -35,6 +35,7 @@ class CrossEntropyLoss(GenericLayer):
 
     def loss(self, y, t):
         self.t = t
+        y = y/np.sum(y)
         totlog = np.log(np.sum(np.exp(y)))
         return t*(totlog - y)
 

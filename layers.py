@@ -25,6 +25,7 @@ class LinearLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
+        # print 'QUI'+str(dJdy)
         dJdW = np.multiply(np.matrix(self.x).T, dJdy).T
         return dJdW
 

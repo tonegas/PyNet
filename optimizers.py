@@ -18,6 +18,7 @@ class SGDMomentum():
             layer.velocity = 0
         else:
             layer.velocity = (self.momentum*layer.velocity)-(self.lerning_rate*dJdW)
+
         layer.W += layer.velocity
 
 class AdaGrad():

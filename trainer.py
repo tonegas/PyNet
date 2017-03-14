@@ -14,8 +14,11 @@ class Trainer():
         if model.group:
             if hasattr(model,'layers'):
                 for layer in reversed(model.layers):
+                    # print 'dJdy'+str(aux_dJdy)
                     aux_dJdx = layer.backward(aux_dJdy)
+                    #print aux_dJdy
                     if hasattr(layer,'dJdW_gradient') and hasattr(optimizer, 'update'):
+                        # print 'grad'+str(np.max(layer.dJdW_gradient(aux_dJdy)))
                         optimizer.update(layer, layer.dJdW_gradient(aux_dJdy))
                     elif depth-1 > 0:
                         self.train(layer, aux_dJdy, optimizer, depth-1)

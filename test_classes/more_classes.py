@@ -49,11 +49,13 @@ class Perceptron(unittest.TestCase):
         train_data, train_targets, test_data, test_targets = gen_data()
 
         model = Sequential([
-            LinearLayer(2, 8, weights='random'),
+            LinearLayer(2, 6, weights='random'),
             SigmoidLayer(),
+            # ReluLayer(),
             # LinearLayer(8, 8, weights='random'),
             # SigmoidLayer(),
-            LinearLayer(8, num_classes, weights='random'),
+            LinearLayer(6, num_classes, weights='random'),
+            # ReluLayer(),
             SoftMaxLayer()
         ])
 
@@ -93,32 +95,32 @@ class Perceptron(unittest.TestCase):
         #
         trainer = Trainer(depth = 2, show_training = True)
 
-        J_list, dJdy_list = trainer.learn(
+        # J_list, dJdy_list = trainer.learn(
+        #     model = model,
+        #     input_data = train_data,
+        #     target_data = train_targets,
+        #     # loss = NegativeLogLikelihoodLoss(),
+        #     # loss = CrossEntropyLoss(),
+        #     loss = SquaredLoss(),
+        #     #optimizer = StocaticGradientDescent(learning_rate=0.1),
+        #     optimizer = SGDMomentum(learning_rate=0.1, momentum=0.9),
+        #             # optimizer=AdaGrad(learning_rate=0.9),
+        #             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
+        #     epochs = 200)
+
+        J_list, dJdy_list = trainer.learn_minibatch(
             model = model,
             input_data = train_data,
             target_data = train_targets,
             loss = NegativeLogLikelihoodLoss(),
             # loss = CrossEntropyLoss(),
             # loss = SquaredLoss(),
-            #optimizer = StocaticGradientDescent(learning_rate=0.1),
-            optimizer = SGDMomentum(learning_rate=0.1, momentum=0.9),
+            # optimizer = StocaticGradientDescent(learning_rate=0.1),
+            optimizer = SGDMomentum(learning_rate=0.01, momentum=0.9),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 200)
-
-        # J_list, dJdy_list = trainer.learn_minibatch(
-        #     model = model,
-        #     input_data = train_data,
-        #     target_data = train_targets,
-        #     loss = NegativeLogLikelihoodLoss(),
-        #     # loss = CrossEntropyLoss(),
-        #     # loss = SquaredLoss(),
-        #     # optimizer = StocaticGradientDescent(learning_rate=0.1),
-        #     optimizer = SGDMomentum(learning_rate=0.1, momentum=0.9),
-        #             # optimizer=AdaGrad(learning_rate=0.9),
-        #             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-        #     epochs = 200,
-        #     batches_num = 200)
+            epochs = 200,
+            batches_num = 200)
         #
         y1 = []
         for i, (x,target) in enumerate(izip(train_data, train_targets)):
