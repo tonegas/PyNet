@@ -43,63 +43,88 @@ class Trainer():
 
         return aux_dJdy
 
-    def learn_one(self, model, input, target, loss, optimizer):
-        y = model.forward(input)
-        J = loss.loss(y,target)
-        dJdy = loss.dJdy_gradient(y,target)
+    def learn_one(self, model, x, t, loss, optimizer):
+        y = model.forward(x)
+        J = loss.loss(y,t)
+        dJdy = loss.dJdy_gradient(y,t)
         self.train(model, dJdy, optimizer)
         return J, dJdy
 
-    def learn(self, model, input_data, target_data, loss, optimizer, epochs):
-        J_list = np.zeros(epochs)
+    def learn(self, model, train, loss, optimizer, epochs, test = None):
+        J_train_list = np.zeros(epochs)
+        J_test_list = np.zeros(epochs)
         dJdy_list = np.zeros(epochs)
-        num_sample = len(input_data)
+        train_size = len(train)
         for epoch in range(epochs):
-            p = np.random.permutation(len(input_data))
-            input_data = input_data[p]
-            target_data = target_data[p]
-            for x,t in izip(input_data,target_data):
+            # np.random.shuffle(train)
+            for (x,t) in train:
                 J, dJdy = self.learn_one(model, x, t, loss, optimizer)
-                J_list[epoch] += np.sqrt(np.sum(np.power(J,2)))/num_sample
-                dJdy_list[epoch] += np.mean(dJdy)/num_sample
+                J_train_list[epoch] += np.sqrt(np.sum(np.power(J,2)))/train_size
+                dJdy_list[epoch] += np.mean(dJdy)
 
-            if self.show_training:
-                print 'Epoch:'+str(epoch)+' J:'+str(J_list[epoch])
+            if test:
+                tests_size = len(test)
+                for x,t in test:
+                    J_test_list[epoch] += np.sqrt(np.sum(np.power(loss.loss(model.forward(x),t),2)))/tests_size
 
-        return J_list, dJdy_list
+                if self.show_training:
+                    print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])+' J_test:'+str(J_test_list[epoch])
 
-    #Qui c'e' il bug dovuto al fatto che non si puo'
-    def learn_minibatch(self, model, input_data, target_data, loss, optimizer, epochs, batches_num):
-        J_list = np.zeros(epochs)
+            else:
+                if self.show_training:
+                    print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])
+
+        if test:
+            return J_train_list, dJdy_list, J_test_list
+        return J_train_list, dJdy_list
+
+
+
+
+    def learn_minibatch(self, model, train, loss, optimizer, epochs, batch_size, test = None):
+        J_train_list = np.zeros(epochs)
+        J_test_list = np.zeros(epochs)
         dJdy_list = np.zeros(epochs)
-        num_sample = len(input_data)
+        num_sample = len(train)
+        batches_num = num_sample/batch_size
         for epoch in range(epochs):
-            p = np.random.permutation(len(input_data))
-            input_data_vect = np.array_split(input_data[p],batches_num)
-            target_data_vect = np.array_split(target_data[p],batches_num)
-            for batch in range(batches_num):
-                mean_dJdy = np.zeros(target_data[0].shape)
-                mean_x = np.zeros(input_data[0].shape)
-                dim_input_data = len(input_data_vect[batch])
-                for x,t in izip(input_data_vect[batch],target_data_vect[batch]):
+            np.random.shuffle(train)
+            train_vect = np.array_split(train, batches_num)
+            for batch in train_vect:
+                mean_x = np.zeros(batch[0][0].shape)
+                mean_dJdy = np.zeros(batch[0][1].shape)
+                train_batch_size = len(batch)
+                # print train_batch_size
+                for x,t in batch:
                     # print 'x'+str(x)
                     y = model.forward(x)
                     # print 'y'+str(y)
                     J = loss.loss(y,t)
 
                     dJdy = loss.dJdy_gradient(y,t)
+                    # print 'dJdy'+str(mean_dJdy)
 
-                    mean_x += x/float(dim_input_data)
-                    mean_dJdy += dJdy/float(dim_input_data)
+                    mean_x += x/float(train_batch_size)
+                    mean_dJdy += dJdy/float(train_batch_size)
                     # print dJdy
-                    J_list[epoch] += np.sqrt(np.sum(np.power(J,2)))/float(num_sample)
-                    dJdy_list[epoch] += np.mean(dJdy)/float(num_sample)
+                    J_train_list[epoch] += np.sqrt(np.sum(np.power(J,2)))/float(num_sample)
+                    dJdy_list[epoch] += np.mean(dJdy)
 
                 y = model.forward(mean_x)
                 self.train(model, mean_dJdy, optimizer)
 
-            if self.show_training:
-                print 'Epoch: '+str(epoch)+' J: '+str(J_list[epoch])
+            if test:
+                tests_size = len(test)
+                for x,t in test:
+                    J_test_list[epoch] += np.sqrt(np.sum(np.power(loss.loss(model.forward(x),t),2)))/tests_size
 
-        return J_list, dJdy_list
-#
+                if self.show_training:
+                    print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])+' J_test:'+str(J_test_list[epoch])
+
+            else:
+                if self.show_training:
+                    print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])
+
+        if test:
+            return J_train_list, dJdy_list, J_test_list
+        return J_train_list, dJdy_list

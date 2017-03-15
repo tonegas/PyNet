@@ -2,6 +2,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Printer2D():
+    def forward_all(self, model, xs):
+        return map(lambda x: model.forward(x), xs)
+
+    def draw_decision_surface(self, figure_ind, model, data):
+        max = np.max([i[0] for i in data],0)
+        min = np.min([i[0] for i in data],0)
+        x_range = np.linspace(min[0]-0.5,max[0]+0.5,100)
+        y_range = np.linspace(min[1]-0.5,max[1]+0.5,100)
+        X, Y = np.meshgrid(x_range, y_range)
+        Z = np.argmax(self.forward_all(model, np.c_[X.ravel(), Y.ravel()]), axis=1)
+        Z = Z.reshape(X.shape)
+        # cs = plt.contourf(xx, yy, Z, cmap='Paired')
+        plt.figure(figure_ind)
+        plt.set_cmap(plt.cm.Paired)
+        plt.pcolormesh(X, Y, Z)
+
     def print_model(self, figure_ind, model, x_list):
         max = np.max(x_list,0)
         min = np.min(x_list,0)
@@ -28,31 +44,19 @@ class Printer2D():
                 except ValueError:
                     pass
 
-    def compare_data(self, figure_ind, data, targets, output, num_classes, classes):
-        x = range(num_classes)
-        y = range(num_classes)
-        x_err = range(num_classes)
-        y_err = range(num_classes)
+    def compare_data(self, figure_ind, train, output, num_classes, colors, classes):
+        xy = range(num_classes)
+        for type in range(num_classes):
+            xy[type] = []
 
         for type in range(num_classes):
-            x[type] = []
-            y[type] = []
-            x_err[type] = []
-            y_err[type] = []
-
-        for type in range(num_classes):
-            for i, point in enumerate(data):
-                if np.argmax(targets[i]) == np.argmax(output[i]):
-                    x[np.argmax(targets[i])].append(point[0])
-                    y[np.argmax(targets[i])].append(point[1])
-                else:
-                    x_err[np.argmax(targets[i])].append(point[0])
-                    y_err[np.argmax(targets[i])].append(point[1])
+            for i, (x,t) in enumerate(train):
+                xy[np.argmax(t)].append((x[0],x[1],np.argmax(output[i])))
 
         plt.figure(figure_ind)
         for type in range(num_classes):
-            plt.scatter(x[type], y[type], s=100, color='green', marker=classes[type])
-            plt.scatter(x_err[type], y_err[type], s=100, color='red', marker=classes[type])
+            for x,y,c in xy[type]:
+                plt.scatter(x, y, s=100, color=colors[c], marker=classes[type])
 
     def print_data(self, figure_ind, data, targets, num_classes, colors, classes):
         x = range(num_classes)

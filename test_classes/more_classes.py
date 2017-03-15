@@ -1,10 +1,12 @@
+import pickle
 import unittest
-from itertools import izip
+from itertools import izip_longest
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 from sklearn import datasets
 
-from layers import LinearLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
 from network import Sequential, Parallel
@@ -13,8 +15,8 @@ from printers import Printer2D
 
 classes = ["o","v","x",".","s"]
 colors = ['r', 'g', 'b', 'y', 'o']
-num_classes = 2
-n = 1000
+num_classes = 4
+n = 200
 p = Printer2D()
 plt.close()
 
@@ -38,23 +40,24 @@ def gen_data():
 
     target_vect = p.to_one_hot_vect(targets,num_classes)
 
-    train_data, test_data = np.array(data[:n / 2]).astype(np.float), np.array(data[n / 2:]).astype(np.float)
-    train_targets, test_targets = np.array(target_vect[:n / 2]).astype(np.float), np.array(target_vect[n / 2:]).astype(np.float)
+    train = zip(np.array(data[:n / 2]).astype(np.float), np.array(target_vect[:n / 2]).astype(np.float))
+    test = zip(np.array(data[n / 2:]).astype(np.float), np.array(target_vect[n / 2:]).astype(np.float))
 
-    return train_data, train_targets, test_data, test_targets
+    return np.array(data[:n / 2]).astype(np.float), np.array(target_vect[:n / 2]).astype(np.float), train, test
 
 
 class Perceptron(unittest.TestCase):
     def test_Perceptron(self):
-        train_data, train_targets, test_data, test_targets = gen_data()
+        input_data, trget_data, train, test = gen_data()
 
         model = Sequential([
-            LinearLayer(2, 6, weights='random'),
-            SigmoidLayer(),
-            # ReluLayer(),
-            # LinearLayer(8, 8, weights='random'),
+            LinearLayer(2, 20, weights='random', L1 = 0.001, L2 = 0.001),
+            #TanhLayer(),
             # SigmoidLayer(),
-            LinearLayer(6, num_classes, weights='random'),
+            ReluLayer(),
+            # LinearLayer(20, 20, weights='random'),
+            # SigmoidLayer(),
+            LinearLayer(20, num_classes, weights='random', L1 = 0.001, L2 = 0.001),
             # ReluLayer(),
             SoftMaxLayer()
         ])
@@ -64,28 +67,29 @@ class Perceptron(unittest.TestCase):
         #     SigmoidLayer(),
         #     #LinearLayer(3, 3, weights='random'),
         #     #SigmoidLayer(),
-        #     Parallel([
-        #         LinearLayer(5, 1, weights='random'),
-        #         LinearLayer(5, 1, weights='random'),
-        #         LinearLayer(5, 1, weights='random'),
-        #         LinearLayer(5, 1, weights='random'),
-        #     ]),
+        #     LinearLayer(5, 4, weights='random'),
+        #     # Parallel([
+        #     #     LinearLayer(5, 1, weights='random'),
+        #     #     LinearLayer(5, 1, weights='random'),
+        #     #     LinearLayer(5, 1, weights='random'),
+        #     #     LinearLayer(5, 1, weights='random'),
+        #     # ]),
         #     # SigmoidLayer(),
         #     SoftMaxLayer()
         # ])
 
         #
         y1 = []
-        for i, (x,target) in enumerate(izip(train_data, train_targets)):
+        for i, (x,target) in enumerate(train):
             y1.append(model.forward(x))
         #
         y2 = []
-        for i, (x,target) in enumerate(izip(test_data, test_targets)):
+        for i, (x,target) in enumerate(test):
             y2.append(model.forward(x))
 
-        p.compare_data(1, train_data, train_targets, y1, num_classes, classes)
-        p.compare_data(1, test_data, test_targets, y2, num_classes, classes)
-        plt.title('Before Training')
+        # p.compare_data(1, train_data, train_targets, y1, num_classes, classes)
+        # p.compare_data(1, test_data, test_targets, y2, num_classes, classes)
+        # plt.title('Before Training')
 
         # print_data(1, train_data, train_targets, ['gray','gray','gray','gray'], classes)
         # print_data(1, test_data, test_targets, ['gray','gray','gray','gray'], classes)
@@ -93,46 +97,52 @@ class Perceptron(unittest.TestCase):
         # print_data(1, train_data, y2, colors, ['x','x','x','x'])
         #plt.title('Before Training')
         #
-        trainer = Trainer(depth = 2, show_training = True)
+        trainer = Trainer(show_training = False)
 
-        # J_list, dJdy_list = trainer.learn(
-        #     model = model,
-        #     input_data = train_data,
-        #     target_data = train_targets,
-        #     # loss = NegativeLogLikelihoodLoss(),
-        #     # loss = CrossEntropyLoss(),
-        #     loss = SquaredLoss(),
-        #     #optimizer = StocaticGradientDescent(learning_rate=0.1),
-        #     optimizer = SGDMomentum(learning_rate=0.1, momentum=0.9),
-        #             # optimizer=AdaGrad(learning_rate=0.9),
-        #             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-        #     epochs = 200)
+        t = time.time()
 
-        J_list, dJdy_list = trainer.learn_minibatch(
+        J_train_list0, dJdy_list = trainer.learn(
             model = model,
-            input_data = train_data,
-            target_data = train_targets,
+            train = train,
+            # test = test,
             loss = NegativeLogLikelihoodLoss(),
             # loss = CrossEntropyLoss(),
             # loss = SquaredLoss(),
             # optimizer = StocaticGradientDescent(learning_rate=0.1),
-            optimizer = SGDMomentum(learning_rate=0.01, momentum=0.9),
+            optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 200,
-            batches_num = 200)
-        #
+            epochs = 3)
+
+        J_train_list1, dJdy_list = trainer.learn_minibatch(
+            model = model,
+            train = train,
+            # test = test,
+            loss = NegativeLogLikelihoodLoss(),
+            # loss = CrossEntropyLoss(),
+            # loss = SquaredLoss(),
+            # optimizer = StocaticGradientDescent(learning_rate=0.1),
+            optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
+                    # optimizer=AdaGrad(learning_rate=0.9),
+                    # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
+            epochs = 2000,
+            batch_size = 5)
+
+        elapsed = time.time() - t
+        print 'Training time: '+str(elapsed)
+
         y1 = []
-        for i, (x,target) in enumerate(izip(train_data, train_targets)):
+        for i, (x,target) in enumerate(train):
             y1.append(model.forward(x))
         #
         y2 = []
-        for i, (x,target) in enumerate(izip(test_data, test_targets)):
+        for i, (x,target) in enumerate(test):
             y2.append(model.forward(x))
         #
         plt.figure(2)
-        p.compare_data(2, train_data, train_targets, y1, num_classes, classes)
-        p.compare_data(2, test_data, test_targets, y2, num_classes, classes)
+        p.draw_decision_surface(2, model, test)
+        p.compare_data(2, train, y1, num_classes, colors, classes)
+        p.compare_data(2, test, y2, num_classes, colors, classes)
         plt.title('After Training')
 
         # print_data(2, train_data, train_targets, ['gray','gray','gray','gray'], classes)
@@ -141,18 +151,22 @@ class Perceptron(unittest.TestCase):
         # print_data(2, test_data, y2, colors, ['.','.','.','.'])
         # plt.title('After Training')
 
-        p.print_model(100, model, train_data)
+        # p.print_model(100, model, train_data)
+
         #
         plt.figure(3)
         plt.title('Errors History (J)')
-        plt.plot(xrange(len(J_list)), J_list, color='red')
+        plt.plot(xrange(len(J_train_list0)), J_train_list0, color='black', label='TrainingT')
+        plt.plot(xrange(len(J_train_list1)), J_train_list1, color='red', label='TrainingN')
+        # plt.plot(xrange(len(J_test_list)), J_test_list, color='blue', label='Test')
+        plt.legend()
         # plt.ylim([0, 2])
         plt.xlabel('Epoch')
-
         #
+        # #
         plt.figure(4)
         plt.title('Loss Gradient History (dJ/dy)')
         plt.plot(xrange(len(dJdy_list)), dJdy_list, color='orange')
         plt.xlabel('Epoch')
-        #
+
         plt.show()

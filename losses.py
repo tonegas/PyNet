@@ -35,7 +35,8 @@ class CrossEntropyLoss(GenericLayer):
 
     def loss(self, y, t):
         self.t = t
-        y = y/np.sum(y)
+        # print y[0]
+        #y = y/np.sum(y)
         totlog = np.log(np.sum(np.exp(y)))
         return t*(totlog - y)
 

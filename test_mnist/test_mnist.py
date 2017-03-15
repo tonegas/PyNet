@@ -6,7 +6,7 @@ import pickle
 import os.path
 from itertools import izip
 
-from layers import LinearLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
 from network import Sequential, Parallel
@@ -43,7 +43,7 @@ def read(dataset = "training", path = "."):
         magic, num, rows, cols = struct.unpack(">IIII", fimg.read(16))
         img = np.fromfile(fimg, dtype=np.uint8).reshape(len(lbl), rows*cols).astype(np.float)
 
-    return img, np.array(p.to_one_hot_vect(lbl,num_classes))
+    return zip(img, np.array(p.to_one_hot_vect(lbl,num_classes)))
 
 
 def show(image):
@@ -61,8 +61,8 @@ def show(image):
     pyplot.show()
 
 
-train_data, train_targets = read(dataset = "training", path = "./mnist")
-test_data, test_targets = read(dataset = "testing", path = "./mnist")
+train = read(dataset = "training", path = "./mnist")
+test = read(dataset = "testing", path = "./mnist")
 
 if os.path.isfile(name_net):
     print "Load Network"
@@ -70,18 +70,19 @@ if os.path.isfile(name_net):
     model = pickle.load(f)
 
     err = 0
-    for ind in range(len(train_data)):
-        if np.argmax(model.forward(train_data[ind])) != np.argmax(train_targets[ind]):
+    for (img,target) in train:
+        if np.argmax(model.forward(img)) != np.argmax(target):
             #print str(err)+' '+str(np.argmax(model.forward(train_data[ind])))+' '+str(np.argmax(train_targets[ind]))
             err += 1
-    print (1.0-err/float(len(train_data)))*100.0
+    print (1.0-err/float(len(train)))*100.0
 
 
     err = 0
-    for ind in range(len(test_data)):
-        if np.argmax(model.forward(test_data[ind])) != np.argmax(test_targets[ind]):
+    for (img,target) in test:
+        #print str(np.argmax(model.forward(test_data[ind])))+' '+str(np.argmax(test_targets[ind]))
+        if np.argmax(model.forward(img)) != np.argmax(target):
             err += 1
-    print (1.0-err/float(len(test_data)))*100.0
+    print (1.0-err/float(len(test)))*100.0
 
 
 else:
@@ -89,10 +90,10 @@ else:
     model = Sequential([
         LinearLayer(784, 10, weights='random'),
         # SigmoidLayer(),
-        # LinearLayer(50, 50, weights='random'),
+        # LinearLayer(30, 30, weights='random'),
         # SigmoidLayer(),
         # ReluLayer(),
-        # LinearLayer(8, 8, weights='random'),
+        # LinearLayer(30, 10, weights='random'),
         # SigmoidLayer(),
         # LinearLayer(50, 10, weights='random'),
         # ReluLayer(),
@@ -101,29 +102,30 @@ else:
 
 trainer = Trainer(show_training = True)
 
+
 J_list, dJdy_list = trainer.learn_minibatch(
     model = model,
-    input_data = train_data,
-    target_data = train_targets,
+    train = train,
     # loss = NegativeLogLikelihoodLoss(),
     loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),
-    # optimizer = StocaticGradientDescent(learning_rate=0.5),
-    optimizer = SGDMomentum(learning_rate=0.1, momentum=0.01),
+    # optimizer = StocaticGradientDescent(learning_rate=0.3),
+    optimizer = SGDMomentum(learning_rate=0.95, momentum=0.95),
             # optimizer=AdaGrad(learning_rate=0.9),
             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-    epochs = 20,
-    batches_num = 200)
+    epochs = 5,
+    batch_size = 50)
+
 
 # J_list, dJdy_list = trainer.learn(
 #     model = model,
-#     input_data = train_data,
+#     input_data = (train_data-np.mean(train_data))/np.exp(np.max(train_data)),
 #     target_data = train_targets,
 #     # loss = NegativeLogLikelihoodLoss(),
 #     loss = CrossEntropyLoss(),
 #     # loss = SquaredLoss(),
-#     optimizer = StocaticGradientDescent(learning_rate=0.2),
-#     # optimizer = SGDMomentum(learning_rate=0.2, momentum=0.5),
+#     # optimizer = StocaticGradientDescent(learning_rate=0.5),
+#     optimizer = SGDMomentum(learning_rate=0.5, momentum=0.8),
 #             # optimizer=AdaGrad(learning_rate=0.9),
 #             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
 #     epochs = 10)
