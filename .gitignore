@@ -96,7 +96,7 @@ ENV/
 .ropeproject
 
 # ide
-.idea
+.idea/
 .idea/.name
 .idea/NeuralNetwork.iml
 .idea/encodings.xml
