@@ -3,16 +3,16 @@ from genericlayer import GenericLayer
 
 
 class LinearLayer(GenericLayer):
-    def __init__(self, num_inputs, num_outputs, weights = 'random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
-        self.num_inputs = num_inputs
-        self.num_outputs = num_outputs
+        self.input_size = input_size
+        self.output_size = output_size
         if type(weights) == str:
             if weights == 'random':
-                self.W = np.random.rand(num_outputs, num_inputs+1)
+                self.W = np.random.rand(output_size, input_size + 1)
             elif weights == 'ones':
-                self.W = np.ones([num_outputs, num_inputs+1])
+                self.W = np.ones([output_size, input_size + 1])
         elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
             self.W = weights
         else:
@@ -23,7 +23,7 @@ class LinearLayer(GenericLayer):
         return self.W.dot(self.x)
 
     def backward(self, dJdy):
-        dJdx = self.W[:,0:self.num_inputs].T.dot(dJdy)
+        dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
         return dJdx
 
     def dJdW_gradient(self, dJdy):
@@ -47,9 +47,17 @@ class SoftMaxLayer(GenericLayer):
             dJdx[i] = self.y[i]*aux_y.dot(dJdy)
         return dJdx
 
-class UnitStepLayer(GenericLayer):
+class HeavisideLayer(GenericLayer):
     def forward(self, x):
         self.y = (x >= 0)*1.0
+        return self.y
+
+    def backward(self, dJdy):
+        return ((self.y > 0)*1.0+(self.y <= 0)*-1.0)*dJdy
+
+class SignLayer(GenericLayer):
+    def forward(self, x):
+        self.y = np.sign(x)
         return self.y
 
     def backward(self, dJdy):
@@ -77,4 +85,4 @@ class ReluLayer(GenericLayer):
         return np.maximum(0,x)
 
     def backward(self, dJdy):
-        return np.maximum(-1,self.x > 0)*dJdy
+        return np.maximum(0,self.x > 0)*dJdy

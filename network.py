@@ -48,3 +48,4 @@ class Parallel(GenericLayer):
             aux_dJdy.append(element.backward(dJdy[a:b]))
             a = b
         return np.sum(np.array(aux_dJdy),0)
+

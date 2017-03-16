@@ -54,7 +54,7 @@ class Perceptron(unittest.TestCase):
             LinearLayer(2, 20, weights='random', L1 = 0.001, L2 = 0.001),
             #TanhLayer(),
             # SigmoidLayer(),
-            ReluLayer(),
+            UnitStepLayer(),
             # LinearLayer(20, 20, weights='random'),
             # SigmoidLayer(),
             LinearLayer(20, num_classes, weights='random', L1 = 0.001, L2 = 0.001),
@@ -97,11 +97,11 @@ class Perceptron(unittest.TestCase):
         # print_data(1, train_data, y2, colors, ['x','x','x','x'])
         #plt.title('Before Training')
         #
-        trainer = Trainer(show_training = False)
+        trainer = Trainer(show_training = True)
 
         t = time.time()
 
-        J_train_list0, dJdy_list = trainer.learn(
+        J_train_list, dJdy_list = trainer.learn(
             model = model,
             train = train,
             # test = test,
@@ -112,21 +112,21 @@ class Perceptron(unittest.TestCase):
             optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 3)
+            epochs = 2000)
 
-        J_train_list1, dJdy_list = trainer.learn_minibatch(
-            model = model,
-            train = train,
-            # test = test,
-            loss = NegativeLogLikelihoodLoss(),
-            # loss = CrossEntropyLoss(),
-            # loss = SquaredLoss(),
-            # optimizer = StocaticGradientDescent(learning_rate=0.1),
-            optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
-                    # optimizer=AdaGrad(learning_rate=0.9),
-                    # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-            epochs = 2000,
-            batch_size = 5)
+        # J_train_list, dJdy_list = trainer.learn_minibatch(
+        #     model = model,
+        #     train = train,
+        #     # test = test,
+        #     loss = NegativeLogLikelihoodLoss(),
+        #     # loss = CrossEntropyLoss(),
+        #     # loss = SquaredLoss(),
+        #     # optimizer = StocaticGradientDescent(learning_rate=0.1),
+        #     optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
+        #             # optimizer=AdaGrad(learning_rate=0.9),
+        #             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
+        #     epochs = 2000,
+        #     batch_size = 5)
 
         elapsed = time.time() - t
         print 'Training time: '+str(elapsed)
@@ -156,8 +156,8 @@ class Perceptron(unittest.TestCase):
         #
         plt.figure(3)
         plt.title('Errors History (J)')
-        plt.plot(xrange(len(J_train_list0)), J_train_list0, color='black', label='TrainingT')
-        plt.plot(xrange(len(J_train_list1)), J_train_list1, color='red', label='TrainingN')
+        # plt.plot(xrange(len(J_train_list0)), J_train_list0, color='black', label='TrainingT')
+        plt.plot(xrange(len(J_train_list)), J_train_list, color='red', label='TrainingN')
         # plt.plot(xrange(len(J_test_list)), J_test_list, color='blue', label='Test')
         plt.legend()
         # plt.ylim([0, 2])
