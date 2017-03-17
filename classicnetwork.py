@@ -8,7 +8,7 @@ class Hopfield(GenericLayer):
     def __init__(self, state_size):
         self.state_size = state_size
         self.net = Sequential([
-            LinearLayer(state_size, state_size, weights = np.zeros([state_size, state_size + 1])),
+            LinearLayer(state_size, state_size, weights = 'zeros'),
             SignLayer()
         ])
 
@@ -39,9 +39,46 @@ class Hopfield(GenericLayer):
 
         return y
 
-    def save_state(self, x):
+    def learn(self, x):
         self.net.layers[0].W += x.reshape([self.state_size,1]).dot(np.hstack([x,0]).reshape([self.state_size+1,1]).T)-np.eye(self.state_size,self.state_size+1)
 
+class Kohonen(GenericLayer):
+    def __init__(self, input_size, output_size, topology, weights = 'random', learning_rate = 0.1, radius = 0.1):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.radius = radius
+        self.topology = topology
+        if type(topology) == str:
+            if topology == 'line' or topology == 'ring':
+                self.position = range(output_size)
+            elif topology == 'gird' or topology == 'mesh':
+                self.position = [(x,y) for x in range(output_size) for y in range(output_size)]
 
+        self.learning_rate = learning_rate
+        if type(weights) == str:
+            if weights == 'random':
+                self.W = np.random.rand(output_size, input_size)
+            elif weights == 'ones':
+                self.W = np.ones([output_size, input_size])
+            elif weights == 'zeros':
+                self.W = np.zeros([output_size, input_size])
+        elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
+            self.W = weights
+        else:
+            raise Exception('Type not correct!')
+
+    def phi(self, d):
+        return np.maximum(1-(d**2/self.radius**2),0)
+
+    def distance(self, winner):
+        return np.sqrt(np.sum((np.array(self.position)-self.position[winner])**2,1))
+
+    def forward(self, x):
+        y = self.W.dot(self.x)
+
+    def learn(self, x):
+        winner = self.winner(x)
+        d = self.distance(winner)
+        self.W = self.learning_rate*np.array([self.phi(d)]).T*(np.array([x]).repeat(self.output_size)-self.W)
 
 

@@ -13,6 +13,8 @@ class LinearLayer(GenericLayer):
                 self.W = np.random.rand(output_size, input_size + 1)
             elif weights == 'ones':
                 self.W = np.ones([output_size, input_size + 1])
+            elif weights == 'zeros':
+                self.W = np.zeros([output_size, input_size + 1])
         elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
             self.W = weights
         else:

@@ -6,12 +6,13 @@ import pickle
 import os.path
 from itertools import izip
 
-from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
 from network import Sequential, Parallel
 from trainer import Trainer
 from printers import Printer2D
+from classicnetwork import Hopfield
 
 num_classes = 10
 name_net = "mnist.net"
@@ -60,22 +61,41 @@ def show(image):
     ax.yaxis.set_ticks_position('left')
     pyplot.show()
 
+def img_compare(image1,image2):
+    """
+    Render a given numpy.uint8 2D array of pixel data.
+    """
+    from matplotlib import pyplot
+    import matplotlib as mpl
+    fig = pyplot.figure()
+
+    ax = fig.add_subplot(1,2,1)
+    imgplot = ax.imshow(image1, cmap=mpl.cm.Greys)
+    imgplot.set_interpolation('nearest')
+    ax.xaxis.set_ticks_position('top')
+    ax.yaxis.set_ticks_position('left')
+
+    ax1 = fig.add_subplot(1,2,2)
+    imgplot1 = ax1.imshow(image2, cmap=mpl.cm.Greys)
+    imgplot1.set_interpolation('nearest')
+    ax1.xaxis.set_ticks_position('top')
+    ax1.yaxis.set_ticks_position('left')
+
+    pyplot.show()
+
+
 
 train = read(dataset = "training", path = "./mnist")
 test = read(dataset = "testing", path = "./mnist")
 
-if os.path.isfile(name_net):
-    print "Load Network"
-    f = open(name_net, "r")
-    model = pickle.load(f)
-
+def test_results(model,train,test):
     err = 0
-    for (img,target) in train:
+    for i,(img,target) in enumerate(train):
+        print i
         if np.argmax(model.forward(img)) != np.argmax(target):
             #print str(err)+' '+str(np.argmax(model.forward(train_data[ind])))+' '+str(np.argmax(train_targets[ind]))
             err += 1
     print (1.0-err/float(len(train)))*100.0
-
 
     err = 0
     for (img,target) in test:
@@ -84,6 +104,11 @@ if os.path.isfile(name_net):
             err += 1
     print (1.0-err/float(len(test)))*100.0
 
+if os.path.isfile(name_net):
+    print "Load Network"
+    f = open(name_net, "r")
+    model = pickle.load(f)
+    test_results(model,train,test)
 
 else:
     print "New Network"
@@ -99,6 +124,32 @@ else:
         # ReluLayer(),
         # SoftMaxLayer()
     ])
+
+mean_val = [np.zeros(784) for i in range(10)]
+tot_val = np.zeros(10)
+for x,t in train:
+    mean_val[np.argmax(t)] += x
+    tot_val[np.argmax(t)] += 1
+
+for i in range(10):
+    # mean_val[i] = mean_val[i]/tot_val[i]
+    mean_val[i] = np.sign(mean_val[i]-125.0)
+    # print mean_val[i]
+    # show(mean_val[i].reshape(28,28))
+
+n = Hopfield(784)
+for i in [0,1,4]:
+    n.save_state(mean_val[i])
+
+# print np.sign(train[0][0]-100.0)
+
+for (x,t) in train:
+    y = n.forward(np.sign(x-125.0))
+    img_compare(x.reshape(28,28),y.reshape(28,28))
+
+#test_results(n,train,test)
+
+exit()
 
 trainer = Trainer(show_training = True)
 
