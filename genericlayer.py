@@ -1,10 +1,7 @@
+import inspect
 import numpy as np
 
-
 class GenericLayer:
-    def __init__(self):
-        self.group = False
-
     def numeric_gradient(self,x):
         dx = 0.00000001
         fx = self.forward(x)
@@ -21,3 +18,27 @@ class GenericLayer:
 
     def backward(self, dJdy):
         return dJdy
+
+    def forward_and_update(self, x):
+        return self.forward(x)
+
+    def backward_and_update(self, dJdy, optimizer, depth):
+        return self.backward(dJdy)
+
+
+class WithElements:
+    def __init__(self, *args):
+        self.elements = []
+        if len(args) == 1 and type(args[0]) == list:
+            args = args[0]
+
+        for element in args:
+            self.add(element)
+
+    def add(self, element):
+        if inspect.isclass(element):
+            element = element()
+
+        self.elements.append(element)
+
+

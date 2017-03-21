@@ -4,10 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 
-from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, HeavisideLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import StocaticGradientDescent, SGDMomentum
-from network import Sequential, Parallel
+from network import Sequential, Parallel, SumGroup, ParallelGroup
 from trainer import Trainer
 from printers import Printer2D
 
@@ -27,35 +27,42 @@ n3 = Sequential([
     n2
 ])
 
-# print n3.forward(np.array([2,3]))
-# print n3.backward(np.array([2]))
+n4 = Sequential(
+    ParallelGroup(SumGroup(LinearLayer(5,3),LinearLayer(5,3))),
+    LinearLayer(3,10)
+)
 
-o = StocaticGradientDescent(learning_rate=0.01)
+print n4.forward(np.array([1,2,3,1,1]))
 
-t = Trainer()
-n3.forward(np.array([2,3]))
-t.train(n3,np.array([3]),o)
-# print n1.forward(np.array([2,3]))
-
-t.train(n3,np.array([3]),o,2)
-# print n1.forward(np.array([2,3]))
-
-# print n3.forward(np.array([2,3]))
-
-n4 = Parallel([
-    LinearLayer(5, 2, weights='random'),
-    n2,
-])
-
-print n4.forward(np.array([2,3,6,7,8]))
-print n4.backward([3,4,5])
-
-print n2.forward(np.array([2,3,6,7,8]))
-t.train(n4,np.array([3,4,5]),o)
-print n4.forward(np.array([2,3,6,7,8]))
-print n2.forward(np.array([2,3,6,7,8]))
-
-print n2.forward(np.array([2,3,6,7,8]))
-t.train(n4,np.array([3,4,5]),o,2)
-print n4.forward(np.array([2,3,6,7,8]))
-print n2.forward(np.array([2,3,6,7,8]))
+# # print n3.forward(np.array([2,3]))
+# # print n3.backward(np.array([2]))
+#
+# o = StocaticGradientDescent(learning_rate=0.01)
+#
+# t = Trainer()
+# n3.forward(np.array([2,3]))
+# t.train(n3,np.array([3]),o)
+# # print n1.forward(np.array([2,3]))
+#
+# t.train(n3,np.array([3]),o,2)
+# # print n1.forward(np.array([2,3]))
+#
+# # print n3.forward(np.array([2,3]))
+#
+# n4 = Parallel([
+#     LinearLayer(5, 2, weights='random'),
+#     n2,
+# ])
+#
+# print n4.forward(np.array([2,3,6,7,8]))
+# print n4.backward([3,4,5])
+#
+# print n2.forward(np.array([2,3,6,7,8]))
+# t.train(n4,np.array([3,4,5]),o)
+# print n4.forward(np.array([2,3,6,7,8]))
+# print n2.forward(np.array([2,3,6,7,8]))
+#
+# print n2.forward(np.array([2,3,6,7,8]))
+# t.train(n4,np.array([3,4,5]),o,2)
+# print n4.forward(np.array([2,3,6,7,8]))
+# print n2.forward(np.array([2,3,6,7,8]))

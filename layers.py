@@ -28,6 +28,11 @@ class LinearLayer(GenericLayer):
         dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
         return dJdx
 
+    def backward_and_update(self, dJdy, optimizer, depth):
+        dJdx = self.backward(dJdy)
+        optimizer.update(self, self.dJdW_gradient(dJdy))
+        return dJdx
+
     def dJdW_gradient(self, dJdy):
         dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
         return dJdW
