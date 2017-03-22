@@ -1,8 +1,8 @@
 import numpy as np
 
 from genericlayer import GenericLayer
-from layers import LinearLayer, SignLayer
-from network import Sequential
+from layers import LinearLayer, SignLayer, SigmoidLayer, TanhLayer, SumLayer, MulLayer
+from network import Sequential, SumGroup, MulGroup, ParallelGroup
 
 class Hopfield(GenericLayer):
     def __init__(self, state_size):
@@ -91,4 +91,53 @@ class Kohonen(GenericLayer):
         d = self.distance(best_matching_unit)
         self.W = self.learning_rate*np.array([self.phi(d)]).T*(np.array([x]).repeat(self.output_size)-self.W)
 
+class Vanilla(GenericLayer):
+    def __init__(self, input_size, output_size,  memory_size):
+        self.n1 = SumGroup(LinearLayer(input_size,memory_size),LinearLayer(memory_size,memory_size))
+        self.n2 = LinearLayer(memory_size,output_size)
+        self.h = np.zeros(memory_size)
 
+
+    def forward(self, x):
+        self.h = self.n1.forward([x,self.h])
+        return self.n2.forward(self.h)
+
+    def backward(self, dJdy):
+        dJdx = self.n2.backward(dJdy)
+        return self.n1.backward(dJdx)
+
+    def backward_and_update(self, dJdy, optimizer, depth):
+        dJdx = self.n2.backward_and_update(dJdy, optimizer, depth)
+        return self.n1.backward_and_update(dJdx, optimizer, depth)
+
+class LSTM(GenericLayer):
+    def __init__(self, input_size, output_size):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.n1 = SumGroup(
+            MulGroup(Sequential(LinearLayer(input_size+output_size,output_size),SigmoidLayer),GenericLayer),
+            MulGroup(Sequential(LinearLayer(input_size+output_size,output_size),SigmoidLayer),Sequential(LinearLayer(input_size+output_size,output_size),TanhLayer))
+        )
+        self.n2 = MulGroup(
+            Sequential(GenericLayer, TanhLayer),
+            Sequential(LinearLayer(input_size+output_size, output_size),SigmoidLayer)
+        )
+        self.ct = np.zeros(output_size)
+        self.ht = np.zeros(output_size)
+
+    def forward(self, x):
+        self.ct = self.n1.forward([[np.append(x,self.ht),self.ct],[np.append(x,self.ht),np.append(x,self.ht)]])
+        self.ht = self.n2.forward([self.ct,np.append(x,self.ht)])
+        return self.ht
+
+    def backward(self, dJdy):
+        dJdx_group = self.n2.backward(dJdy)
+        [[dJdx1,dJdx2],[dJdx3,dJdx4]] = self.n1.backward(dJdx_group[0])
+        dJdx = dJdx_group[1]+dJdx1+dJdx3+dJdx4
+        return dJdx[:self.input_size]
+
+    def backward_and_update(self, dJdy, optimizer, depth):
+        dJdx_group = self.n2.backward_and_update(dJdy, optimizer, depth)
+        [[dJdx1,dJdx2],[dJdx3,dJdx4]] = self.n1.backward_and_update(dJdx_group[0], optimizer, depth)
+        dJdx = dJdx_group[1]+dJdx1+dJdx3+dJdx4
+        return dJdx[:self.input_size]

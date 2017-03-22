@@ -7,10 +7,10 @@ class Trainer():
         self.show_training = show_training
 
     def learn_one(self, model, x, t, loss, optimizer):
-        y = model.forward_and_update(x,0)
+        y = model.forward_and_update(x)
         J = loss.loss(y,t)
         dJdy = loss.dJdy_gradient(y,t)
-        model.backward_and_update(dJdy, optimizer)
+        model.backward_and_update(dJdy, optimizer, self.depth)
         return J, dJdy
 
     def learn(self, model, train, loss, optimizer, epochs, test = None):

@@ -93,3 +93,32 @@ class ReluLayer(GenericLayer):
 
     def backward(self, dJdy):
         return np.maximum(0,self.x > 0)*dJdy
+
+class SumLayer(GenericLayer):
+    def forward(self, x):
+        self.x = np.array(x)
+        return np.sum(self.x,0)
+
+    def backward(self, dJdy):
+        return np.ones(self.x.shape)*dJdy
+
+class MulLayer(GenericLayer):
+    def forward(self, x):
+        self.x = np.array(x)
+        return np.prod(self.x,0)
+
+    def backward(self, dJdy):
+        dJdx = []
+        for i in range(self.x.shape[0]):
+            dJdx.append(np.prod(np.delete(self.x,i,0),0))
+        return np.array(dJdx)*dJdy
+
+class ConstantLayer(GenericLayer):
+    def __init__(self, value):
+        self.value = value
+
+    def forward(self, x):
+        return self.value
+
+    def backward(self, dJdy):
+        return np.zeros(self.value.size)

@@ -17,18 +17,21 @@ class Sequential(GenericLayer, WithElements):
         return dJdx
 
     def backward_and_update(self, dJdy, optimizer, depth):
+        aux_dJdx = dJdy
         for layer in reversed(self.elements):
             # print 'dJdy'+str(aux_dJdy)
             if depth - 1 >= 0:
-                dJdx = layer.backward_and_update(dJdy, optimizer, depth-1)
+                dJdx = layer.backward_and_update(aux_dJdx, optimizer, depth-1)
             else:
-                dJdx = layer.backward(dJdy)
+                dJdx = layer.backward(aux_dJdx)
             #print aux_dJdy
             if hasattr(layer,'dJdW_gradient') and hasattr(optimizer, 'update'):
                 # print 'grad'+str(np.max(layer.dJdW_gradient(aux_dJdy)))
-                optimizer.update(layer, layer.dJdW_gradient(dJdy))
+                optimizer.update(layer, layer.dJdW_gradient(aux_dJdx))
 
-        return dJdx
+            aux_dJdx = dJdx
+
+        return aux_dJdx
 
 class Parallel(GenericLayer, WithElements):
     def __init__(self, *args):
@@ -100,7 +103,7 @@ class SumGroup(GenericLayer, WithElements):
 class MulGroup(GenericLayer, WithElements):
     def forward(self, x_group):
         self.y_group = []
-        for (x, element) in izip(x_group, self.elements):
+        for (x, element) in zip(x_group, self.elements):
             self.y_group.append(element.forward(x))
         return np.prod(np.array(self.y_group),0)
 
@@ -138,6 +141,7 @@ class ParallelGroup(GenericLayer, WithElements):
         aux_dJdx = []
         for (dJdy, element) in izip(dJdy_group, self.elements):
             aux_dJdx.append(element.backward(dJdy))
+
         return np.sum(np.array(aux_dJdx),0)
 
     def backward_and_update(self, dJdy_group, optimizer, depth):
@@ -152,3 +156,29 @@ class ParallelGroup(GenericLayer, WithElements):
                 optimizer.update(element, element.dJdW_gradient(dJdy))
 
         return np.sum(np.array(aux_dJdx),0)
+
+class MapGroup(GenericLayer, WithElements):
+    def forward(self, x_group):
+        y_group = []
+        for (x, element) in zip(x_group, self.elements):
+            y_group.append(element.forward(x))
+        return y_group
+
+    def backward(self, dJdy_group):
+        aux_dJdx = []
+        for (dJdy, element) in izip(dJdy_group, self.elements):
+            aux_dJdx.append(element.backward(dJdy))
+        return aux_dJdx
+
+    def backward_and_update(self, dJdy_group, optimizer, depth):
+        aux_dJdx = []
+        for (dJdy, element) in izip(dJdy_group, self.elements):
+            if depth - 1 >= 0:
+                aux_dJdx.append(element.backward_and_update(dJdy, optimizer, depth-1))
+            else:
+                aux_dJdx.append(element.backward(dJdy))
+
+            if hasattr(element,'dJdW_gradient') and hasattr(optimizer, 'update'):
+                optimizer.update(element, element.dJdW_gradient(dJdy))
+
+        return aux_dJdx
