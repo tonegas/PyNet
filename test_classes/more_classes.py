@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import time
 from sklearn import datasets
 
-from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, UnitStepLayer
+from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from optimizers import StocaticGradientDescent, SGDMomentum
+from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel
 from trainer import Trainer
 from printers import Printer2D
@@ -53,8 +53,8 @@ class Perceptron(unittest.TestCase):
         model = Sequential([
             LinearLayer(2, 20, weights='random', L1 = 0.001, L2 = 0.001),
             #TanhLayer(),
-            # SigmoidLayer(),
-            UnitStepLayer(),
+            SigmoidLayer(),
+            # HeavisideLayer(),
             # LinearLayer(20, 20, weights='random'),
             # SigmoidLayer(),
             LinearLayer(20, num_classes, weights='random', L1 = 0.001, L2 = 0.001),
@@ -108,10 +108,11 @@ class Perceptron(unittest.TestCase):
             loss = NegativeLogLikelihoodLoss(),
             # loss = CrossEntropyLoss(),
             # loss = SquaredLoss(),
-            # optimizer = StocaticGradientDescent(learning_rate=0.1),
-            optimizer = SGDMomentum(learning_rate=0.1, momentum=0.1),
+            optimizer = GradientDescent(learning_rate=1.0/len(train)),
+            # optimizer = SGDMomentum(learning_rate=0.011, momentum=0.1),
                     # optimizer=AdaGrad(learning_rate=0.9),
                     # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
+            batch_size = len(train),
             epochs = 2000)
 
         # J_train_list, dJdy_list = trainer.learn_minibatch(

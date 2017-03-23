@@ -4,11 +4,10 @@ from sklearn import datasets
 
 from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, HeavisideLayer, ConstantLayer, MulLayer, SumLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from optimizers import StocaticGradientDescent, SGDMomentum
+from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel, SumGroup, ParallelGroup, MulGroup, MapGroup
 from genericlayer import GenericLayer
 from trainer import Trainer
-from optimizers import StocaticGradientDescent, SGDMomentum
 
 #y = a*x^2+b*x+c
 
@@ -24,7 +23,7 @@ n = Sequential(
         ),SumLayer
     )
 
-n2 = LinearLayer(3,1,L1=1,L2=1)
+n2 = LinearLayer(3,1)
 
 
 # train = []
@@ -65,8 +64,8 @@ n2 = LinearLayer(3,1,L1=1,L2=1)
 
 
 train2 = []
-for i,x in enumerate(np.linspace(-10,10,50)):
-    train2.append((np.array([x**2,x,1]),np.array([5.2*x+7.1])))
+for i,x in enumerate(np.linspace(-2,2,5)):
+    train2.append((np.array([x**2,x,1]),np.array([3.2*x**2+5.2*x+7.1])))
 
 t = Trainer(show_training=True, depth=5)
 
@@ -74,15 +73,16 @@ J_list, dJdy_list = t.learn(
     model = n2,
     train = train2,
     loss = SquaredLoss(),
-    optimizer = StocaticGradientDescent(learning_rate=0.0001),
+    optimizer = GradientDescent(learning_rate=0.01),
+    batch_size = len(train2),
     epochs = 50
 )
 test = []
 for x in np.linspace(-10,10,50):
-    test.append((np.array([x**2,x,1]),np.array([5.2*x+7.1])))
+    test.append((np.array([x**2,x,1]),np.array([3.2*x**2+5.2*x+7.1])))
 
 plt.figure(3)
-plt.title('Errors History (J)')
+plt.title('Points and Function')
 plt.plot(np.array([x[1] for (x,t) in test]), np.array([t for (x,t) in test]), color='red')
 plt.plot(np.array([x[1] for (x,t) in test]), np.array([n2.forward(x) for (x,t) in test]), color='green')
 # plt.ylim([0, 2])
@@ -90,7 +90,7 @@ plt.xlabel('x')
 plt.ylabel('y')
 
 plt.figure(1)
-plt.title('Points and Function')
+plt.title('Errors History (J)')
 plt.plot(xrange(len(J_list)), J_list, color='red')
 
 plt.show()

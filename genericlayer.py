@@ -13,17 +13,11 @@ class GenericLayer:
             dJdx[:,r] = (fxdx-fx)/dx
         return dJdx
 
-    def forward(self, x):
+    def forward(self, x, update = False):
         return x
 
-    def backward(self, dJdy):
+    def backward(self, dJdy, optimizer = None):
         return dJdy
-
-    def forward_and_update(self, x):
-        return self.forward(x)
-
-    def backward_and_update(self, dJdy, optimizer, depth):
-        return self.backward(dJdy)
 
 
 class WithElements:

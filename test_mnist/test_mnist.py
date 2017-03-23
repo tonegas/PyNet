@@ -6,9 +6,9 @@ import pickle
 import os.path
 from itertools import izip
 
-from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer
+from layers import LinearLayer, NormalizationLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from optimizers import StocaticGradientDescent, SGDMomentum
+from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel
 from trainer import Trainer
 from printers import Printer2D
@@ -91,7 +91,6 @@ test = read(dataset = "testing", path = "./mnist")
 def test_results(model,train,test):
     err = 0
     for i,(img,target) in enumerate(train):
-        print i
         if np.argmax(model.forward(img)) != np.argmax(target):
             #print str(err)+' '+str(np.argmax(model.forward(train_data[ind])))+' '+str(np.argmax(train_targets[ind]))
             err += 1
@@ -113,9 +112,10 @@ if os.path.isfile(name_net):
 else:
     print "New Network"
     model = Sequential([
-        LinearLayer(784, 10, weights='random'),
-        # SigmoidLayer(),
-        # LinearLayer(30, 30, weights='random'),
+        NormalizationLayer(0,255,True),
+        LinearLayer(784, 50, weights='random'),
+        SigmoidLayer(),
+        LinearLayer(50, 10, weights='random'),
         # SigmoidLayer(),
         # ReluLayer(),
         # LinearLayer(30, 10, weights='random'),
@@ -125,48 +125,48 @@ else:
         # SoftMaxLayer()
     ])
 
-mean_val = [np.zeros(784) for i in range(10)]
-tot_val = np.zeros(10)
-for x,t in train:
-    mean_val[np.argmax(t)] += x
-    tot_val[np.argmax(t)] += 1
-
-for i in range(10):
-    # mean_val[i] = mean_val[i]/tot_val[i]
-    mean_val[i] = np.sign(mean_val[i]-125.0)
-    # print mean_val[i]
-    # show(mean_val[i].reshape(28,28))
-
-n = Hopfield(784)
-for i in [0,1,4]:
-    n.save_state(mean_val[i])
-
-# print np.sign(train[0][0]-100.0)
-
-for (x,t) in train:
-    y = n.forward(np.sign(x-125.0))
-    img_compare(x.reshape(28,28),y.reshape(28,28))
-
-#test_results(n,train,test)
-
-exit()
+# mean_val = [np.zeros(784) for i in range(10)]
+# tot_val = np.zeros(10)
+# for x,t in train:
+#     mean_val[np.argmax(t)] += x
+#     tot_val[np.argmax(t)] += 1
+#
+# for i in range(10):
+#     # mean_val[i] = mean_val[i]/tot_val[i]
+#     mean_val[i] = np.sign(mean_val[i]-125.0)
+#     # print mean_val[i]
+#     # show(mean_val[i].reshape(28,28))
+#
+# n = Hopfield(784)
+# for i in [0,1,4]:
+#     n.save_state(mean_val[i])
+#
+# # print np.sign(train[0][0]-100.0)
+#
+# for (x,t) in train:
+#     y = n.forward(np.sign(x-125.0))
+#     img_compare(x.reshape(28,28),y.reshape(28,28))
+#
+# #test_results(n,train,test)
+#
+# exit()
 
 trainer = Trainer(show_training = True)
 
 
-J_list, dJdy_list = trainer.learn_minibatch(
+J_list, dJdy_list = trainer.learn(
     model = model,
     train = train,
     # loss = NegativeLogLikelihoodLoss(),
     loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),
     # optimizer = StocaticGradientDescent(learning_rate=0.3),
-    optimizer = SGDMomentum(learning_rate=0.95, momentum=0.95),
+    optimizer = GradientDescentMomentum(learning_rate=0.02/200, momentum=0.95),
             # optimizer=AdaGrad(learning_rate=0.9),
             # optimizer=RMSProp(learning_rate=0.1, decay_rate=0.9),
-    epochs = 5,
-    batch_size = 50)
-
+    epochs = 50,
+    batch_size = 200
+)
 
 # J_list, dJdy_list = trainer.learn(
 #     model = model,
