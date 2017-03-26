@@ -1,6 +1,46 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+class ShowTraining():
+    def __init__(self, epochs_num = None):
+        plt.ion()
+        self.fig1 = plt.figure(1)
+        self.ax = self.fig1.add_subplot(111)
+        self.ax.set_title('Errors History (J)')
+        self.train, = self.ax.plot(xrange(len([])), [], color='green', marker='^', label='Training')
+        self.validation, = self.ax.plot(xrange(len([])), [], color='blue', marker='s', label='Validation')
+        self.ax.set_xlabel('Epochs')
+        self.ax.set_ylabel(r'$||J||_2/N$')
+        self.ax.legend()
+        if epochs_num is not None:
+            self.ax.set_xlim([0,epochs_num])
+
+        self.fig2 = plt.figure(2)
+        self.ax2 = self.fig2.add_subplot(111)
+        self.ax2.set_title('Loss Gradient History (dJ/dy)')
+        self.dJdy, = self.ax2.plot(xrange(len([])), [], color='red', marker='o')
+        self.ax2.set_xlabel('Epochs')
+        self.ax2.set_ylabel(r'$||\delta J/\delta y||_2/N$')
+        if epochs_num is not None:
+            self.ax2.set_xlim([0,epochs_num])
+
+    def show(self, epoch, J_train_list, dJdy_list = None, J_validation_list = None):
+        self.train.set_xdata(xrange(len(J_train_list[:epoch+1])))
+        self.train.set_ydata(J_train_list[:epoch+1])
+        if J_validation_list is not None:
+            self.validation.set_xdata(xrange(len(J_validation_list[:epoch+1])))
+            self.validation.set_ydata(J_validation_list[:epoch+1])
+            self.ax.set_ylim([0,max(max(J_train_list)+max(J_train_list)*0.1,max(J_validation_list)+max(J_validation_list)*0.1)])
+        else:
+            self.ax.set_ylim([0,max(J_train_list)+max(J_train_list)*0.1])
+        self.fig1.canvas.draw()
+
+        self.dJdy.set_xdata(xrange(len(dJdy_list[:epoch+1])))
+        self.dJdy.set_ydata(dJdy_list[:epoch+1])
+        self.ax2.set_ylim([min(dJdy_list)-min(dJdy_list)*0.1,max(dJdy_list)+max(dJdy_list)*0.1])
+        self.fig2.canvas.draw()
+
+
 class Printer2D():
     def forward_all(self, model, xs):
         return map(lambda x: model.forward(x), xs)
@@ -24,13 +64,13 @@ class Printer2D():
         x_range = np.linspace(min[0],max[0],100)
         y_range = np.linspace(min[1],max[1],100)
         X, Y = np.meshgrid(x_range, y_range)
-        for ind,layer in enumerate(model.layers):
+        for ind,layer in enumerate(model.elements):
             plt.figure(figure_ind+ind)
             z_vett = []
             for x_ind in xrange(X.shape[0]):
                 for y_ind in xrange(Y.shape[1]):
                     aux_x = np.array([X[x_ind][y_ind],Y[x_ind][y_ind]])
-                    for layer in model.layers[:ind]:
+                    for layer in model.elements[:ind]:
                         aux_x = layer.forward(aux_x)
                     z_vett.append(aux_x)
 
@@ -43,6 +83,7 @@ class Printer2D():
                     CS = plt.contour(X, Y, Z)
                 except ValueError:
                     pass
+
 
     def compare_data(self, figure_ind, train, output, num_classes, colors, classes):
         xy = range(num_classes)
@@ -69,9 +110,3 @@ class Printer2D():
         for type in range(num_classes):
             plt.scatter(x[type], y[type], s=100, color=colors[type], marker=classes[type])
 
-    def to_one_hot_vect(self, vect, num_classes):
-        on_hot_vect = []
-        for i,target in enumerate(vect):
-            on_hot_vect.append(np.zeros(num_classes))
-            on_hot_vect[i][target] = 1
-        return on_hot_vect

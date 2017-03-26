@@ -1,7 +1,22 @@
-import inspect
+import inspect, pickle, os
 import numpy as np
 
-class GenericLayer:
+
+class StoreNetwork:
+    def save(self, file):
+        f = open(file, "w")
+        pickle.dump(self,f)
+
+    @staticmethod
+    def load(file):
+        if os.path.isfile(file):
+            f = open(file, "r")
+            return pickle.load(f)
+        else:
+            raise Exception('File does not exist!')
+
+
+class GenericLayer(StoreNetwork):
     def numeric_gradient(self,x):
         dx = 0.00000001
         fx = self.forward(x)
@@ -34,5 +49,3 @@ class WithElements:
             element = element()
 
         self.elements.append(element)
-
-

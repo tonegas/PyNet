@@ -2,16 +2,19 @@ import numpy as np
 from itertools import izip
 from genericlayer import GenericLayer, WithElements
 
+class Lock(GenericLayer):
+    def __init__(self, net):
+        self.net = net
+
+    def forward(self, x, update = False):
+        return self.net.forward(x)
+
+    def backward(self, dJdy, optimizer = None):
+        return self.net.backward(dJdy)
+
 class Sequential(GenericLayer, WithElements):
     def __init__(self, *args):
-        self.lock = False
         WithElements.__init__(self, *args)
-
-    def lock(self):
-        self.lock = True
-
-    def unlock(self):
-        self.lock = False
 
     def forward(self, x, update = False):
         aux_x = x
@@ -22,15 +25,9 @@ class Sequential(GenericLayer, WithElements):
     def backward(self, dJdy, optimizer = None):
         aux_dJdx = dJdy
         for layer in reversed(self.elements):
-            if self.lock:
-                dJdx = layer.backward(aux_dJdx)
-            else:
-                dJdx = layer.backward(aux_dJdx, optimizer)
-
-            aux_dJdx = dJdx
+            aux_dJdx = layer.backward(aux_dJdx, optimizer)
 
         return aux_dJdx
-
 
 class Parallel(GenericLayer, WithElements):
     def __init__(self, *args):
@@ -80,7 +77,6 @@ class MulGroup(GenericLayer, WithElements):
     def backward(self, dJdy, optimizer = None):
         dJdx_group = []
         for i,element in enumerate(self.elements):
-            # print 'dJdy'+str(aux_dJdy)
             aux_dJdy = np.prod(np.array(self.y_group[:i]+self.y_group[i+1:]),0)*dJdy
             dJdx_group.append(element.backward(aux_dJdy, optimizer))
 

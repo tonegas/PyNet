@@ -1,6 +1,22 @@
 import numpy as np
 from genericlayer import GenericLayer
 
+def define_weights(weights, input_size, output_size):
+    if type(weights) == str:
+        if weights == 'random':
+            return np.random.rand(output_size, input_size)
+        elif weights == 'norm_random':
+            return (np.random.rand(output_size, input_size)-0.5)/input_size
+        elif weights == 'ones':
+            return np.ones([output_size, input_size])
+        elif weights == 'zeros':
+            return np.zeros([output_size, input_size])
+        else:
+            raise Exception('Type not correct!')
+    elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
+        return weights
+    else:
+        raise Exception('Type not correct!')
 
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
@@ -9,17 +25,7 @@ class LinearLayer(GenericLayer):
         self.input_size = input_size
         self.output_size = output_size
         self.dW = 0
-        if type(weights) == str:
-            if weights == 'random':
-                self.W = np.random.rand(output_size, input_size + 1)
-            elif weights == 'ones':
-                self.W = np.ones([output_size, input_size + 1])
-            elif weights == 'zeros':
-                self.W = np.zeros([output_size, input_size + 1])
-        elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
-            self.W = weights
-        else:
-            raise Exception('Type not correct!')
+        self.W = define_weights(weights, input_size + 1, output_size)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
@@ -122,17 +128,14 @@ class ConstantLayer(GenericLayer):
         return np.zeros(self.value.size)
 
 class NormalizationLayer(GenericLayer):
-    def __init__(self, min = np.infty, max = -np.infty, lock = False):
-        self.min = min
-        self.max = max
-        self.lock = lock
+    def __init__(self, min_in, max_in, min_out = 0, max_out = 1):
+        self.min_in = min_in
+        self.max_in = max_in
+        self.min_out = min_out
+        self.max_out = max_out
 
     def forward(self, x, update = False):
-        if update and ~self.lock:
-            self.min = np.minimum(self.min, x)
-            self.max = np.maximum(self.max, x)
-
-        return x/np.maximum(np.abs(self.max-self.min),1)
+        return (x/(self.max_in-self.min_in)-self.min_in)*(self.max_out-self.min_out)+self.min_out
 
     def backward(self, dJdy, optimizer = None):
-        return dJdy*(self.max-self.min)
+        return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)
