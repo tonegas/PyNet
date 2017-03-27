@@ -1,9 +1,9 @@
-## PyNet
+# PyNet
 PyNet is a easy and didactic framework for machine learning with neural networks.
 The focus of the framework is understanding in a easy way the basic concepts of a a neural network thanks to a short and clear implementation in python.
 In the framework are implemented some basic networks as Hopfield network, Kohonen network, and it is easy to implement every layers networks.
 
-## The Architecture
+# The Architecture
 The architecture of PyNet is pretty similar to Torch7 and Keras interfaces.
 The main modules of the framework are:
 - genericlayer.py. It is the main common classes.
