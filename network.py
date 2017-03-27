@@ -64,7 +64,6 @@ class SumGroup(GenericLayer, WithElements):
         for element in self.elements:
             # print 'dJdy'+str(aux_dJdy)
             dJdx_group.append(element.backward(dJdy, optimizer))
-
         return dJdx_group
 
 class MulGroup(GenericLayer, WithElements):

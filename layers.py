@@ -98,6 +98,23 @@ class ReluLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         return np.maximum(0,self.x > 0)*dJdy
 
+class WeightLayer(GenericLayer):
+    def __init__(self, size, weights ='random'):
+        self.size = size
+        self.dW = 0
+        self.W = define_weights(weights, 1, size)
+
+    def forward(self, x, update = False):
+        return self.W
+
+    def backward(self, dJdy, optimizer = None):
+        if optimizer:
+            optimizer.update(self, self.dJdW_gradient(dJdy))
+        return np.zeros(self.W.size)
+
+    def dJdW_gradient(self, dJdy):
+        return dJdy
+
 class SumLayer(GenericLayer):
     def forward(self, x, update = False):
         self.x = np.array(x)
@@ -115,6 +132,7 @@ class MulLayer(GenericLayer):
         dJdx = []
         for i in range(self.x.shape[0]):
             dJdx.append(np.prod(np.delete(self.x,i,0),0))
+
         return np.array(dJdx)*dJdy
 
 class ConstantLayer(GenericLayer):
