@@ -1,23 +1,24 @@
-## PyNet
+# PyNet
 PyNet is a easy and didactic framework for machine learning with neural networks.
 The focus of the framework is understanding in a easy way the basic concepts of a a neural network thanks to a short and clear implementation in python.
-In the framework are implemented some basic networks as Hopfield network, Kohonen network, and it is easy to implement every layers networks.
+In the framework are implemented some basic networks as _Hopfield_ network, _Kohonen_ network, and it is easy to implement every layers networks.
 
-## The Architecture
+# The Architecture
 The architecture of PyNet is pretty similar to Torch7 and Keras interfaces.
 The main modules of the framework are:
-- genericlayer.py. It is the main common classes.
-- layers.py. All the main classic layers already implemented as:
+- __genericlayer.py.__ It is the main common classes.
+- __layers.py.__ All the main classic layers already implemented as:
     - LinearLayer
     - SoftMaxLayer
     - SigmoidLayer
     - TanhLayer
     - etc...
-- network.py. This file contains the main structure for create a computational graph as:
+- __network.py.__ This file contains the main structure for create a computational graph as:
     - Sequential: each element in sequential has to have the number of inputs equal
     to the number of outputs of the previous layer. The input is forword across the chain in the sequential elements.
     - Parallel: each element in parallel has to have the same number of inputs,
     the inputs is forwarded to each element of in the parallel.
+
     An Example:
     ```python
     model = Sequential(
@@ -38,13 +39,15 @@ The main modules of the framework are:
         SoftMaxLayer
     )
     ```
-    These two classes manage of a vector input and generate a vector output.
-    Moreover a structure to manage group of vector, to easy create a computational graph as:
+    These two classes manage a vector input and generate a vector output.
+    Moreover there are some structures to manage group of vector, in order to create a computational graph as:
     - SumGroup
     - MulGroup
     - ParallelGroup
     - MapGroup
+
     An Example:
+
     ```python
     #y = a*x^2+b*x+c
     n = Sequential(
@@ -101,16 +104,16 @@ The main modules of the framework are:
             )
         )
     ```
-- losses.py. In this file there are the losses function as:
+- __losses.py.__ In this file there are the losses function as:
     - SquareLoss
     - NegativeLogLikelihoodLoss
     - CrossEntropyLoss
 
-- optimizer.py. Here there are the main optimizer classes as:
+- __optimizer.py.__ Here there are the main optimizer classes as:
     - GradientDescent
     - GradientDescentMomentum
 
-- trainer.py. In this file there is the class for the training.
+- __trainer.py.__ In this file there is the class for the training.
 
 ## Complete Example of classification
 ```python
@@ -124,10 +127,14 @@ The main modules of the framework are:
     from trainer import Trainer
     from printers import Printer2D, ShowTraining
 
+    num_classes = 4
+    classes = ["o","^","x","s"]
+    colors = ['r', 'g', 'b', 'y']
+
     model = Sequential(
         LinearLayer(2, 3),
         SigmoidLayer,
-        LinearLayer(3, 4),
+        LinearLayer(3, num_classes),
         SoftMaxLayer,
     )
 
@@ -138,11 +145,21 @@ The main modules of the framework are:
         model = model,
         train = train,
         loss = NegativeLogLikelihoodLoss(),
-        optimizer = GradientDescentMomentum(learning_rate=0.011, momentum=0.1),
+        optimizer = GradientDescentMomentum(learning_rate=0.1, momentum=0.1),
         batch_size = 10,
         epochs = 5
     )
-```
-## Create a NewLayer
 
+    for i, (x,target) in enumerate(train):
+        y.append(model.forward(x))
+
+    p = Printer2D() # A class just for the 2D input of classification
+    p.draw_decision_surface(1, model, train)
+    p.compare_data(1, train, y, num_classes, colors, classes)
+    plt.title('After Training')
+```
+# Why
+
+The only good way to understand modern neural network is to try to implement one from scratch.
+After that you can use TensorFlow.
 
