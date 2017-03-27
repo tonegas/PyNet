@@ -6,7 +6,7 @@ In the framework are implemented some basic networks as Hopfield network, Kohone
 # The Architecture
 The architecture of PyNet is pretty similar to Torch7 and Keras interfaces.
 The main modules of the framework are:
-- genericlayer.py. It is the main common classes.
+- __genericlayer.py__ It is the main common classes.
 - layers.py. All the main classic layers already implemented as:
     - LinearLayer
     - SoftMaxLayer
@@ -18,6 +18,7 @@ The main modules of the framework are:
     to the number of outputs of the previous layer. The input is forword across the chain in the sequential elements.
     - Parallel: each element in parallel has to have the same number of inputs,
     the inputs is forwarded to each element of in the parallel.
+
     An Example:
     ```python
     model = Sequential(
@@ -44,7 +45,9 @@ The main modules of the framework are:
     - MulGroup
     - ParallelGroup
     - MapGroup
+
     An Example:
+
     ```python
     #y = a*x^2+b*x+c
     n = Sequential(
