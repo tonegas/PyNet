@@ -2,21 +2,26 @@ import numpy as np
 from genericlayer import GenericLayer
 
 def define_weights(weights, input_size, output_size):
+    weights_val = None
     if type(weights) == str:
         if weights == 'random':
-            return np.random.rand(output_size, input_size)
+            weights_val = np.random.rand(output_size, input_size)
         elif weights == 'norm_random':
-            return (np.random.rand(output_size, input_size)-0.5)/input_size
+            weights_val = (np.random.rand(output_size, input_size)-0.5)/input_size
         elif weights == 'ones':
-            return np.ones([output_size, input_size])
+            weights_val = np.ones([output_size, input_size])
         elif weights == 'zeros':
-            return np.zeros([output_size, input_size])
+            weights_val = np.zeros([output_size, input_size])
         else:
             raise Exception('Type not correct!')
     elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
-        return weights
+        weights_val = weights.reshape(output_size, input_size)
     else:
         raise Exception('Type not correct!')
+    if input_size == 1:
+        return weights_val.reshape(output_size)
+    else:
+        return weights_val
 
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
@@ -41,6 +46,45 @@ class LinearLayer(GenericLayer):
         dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
         return dJdW
 
+class WeightMatrixLayer(GenericLayer):
+    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
+        self.L1 = L1
+        self.L2 = L2
+        self.input_size = input_size
+        self.output_size = output_size
+        self.dW = 0
+        self.W = define_weights(weights, input_size, output_size)
+
+    def forward(self, x, update = False):
+        self.x = np.hstack(x)
+        return self.W.dot(self.x)
+
+    def backward(self, dJdy, optimizer = None):
+        dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
+        if optimizer:
+            optimizer.update(self, self.dJdW_gradient(dJdy))
+        return dJdx
+
+    def dJdW_gradient(self, dJdy):
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
+        return dJdW
+
+class WeightLayer(GenericLayer):
+    def __init__(self, size, weights ='random'):
+        self.size = size
+        self.dW = 0
+        self.W = define_weights(weights, 1, size)
+
+    def forward(self, x, update = False):
+        return self.W
+
+    def backward(self, dJdy, optimizer = None):
+        if optimizer:
+            optimizer.update(self, self.dJdW_gradient(dJdy))
+        return np.zeros(self.W.size)
+
+    def dJdW_gradient(self, dJdy):
+        return dJdy
 
 class SoftMaxLayer(GenericLayer):
     def forward(self, x, update = False):
@@ -97,23 +141,6 @@ class ReluLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         return np.maximum(0,self.x > 0)*dJdy
-
-class WeightLayer(GenericLayer):
-    def __init__(self, size, weights ='random'):
-        self.size = size
-        self.dW = 0
-        self.W = define_weights(weights, 1, size)
-
-    def forward(self, x, update = False):
-        return self.W
-
-    def backward(self, dJdy, optimizer = None):
-        if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
-        return np.zeros(self.W.size)
-
-    def dJdW_gradient(self, dJdy):
-        return dJdy
 
 class SumLayer(GenericLayer):
     def forward(self, x, update = False):

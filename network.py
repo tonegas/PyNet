@@ -57,6 +57,7 @@ class SumGroup(GenericLayer, WithElements):
         y_group = []
         for (x, element) in izip(x_group, self.elements):
             y_group.append(element.forward(x, update))
+        print y_group
         return np.sum(np.array(y_group),0)
 
     def backward(self, dJdy, optimizer = None):

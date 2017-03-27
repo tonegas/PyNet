@@ -67,7 +67,7 @@ J_list, dJdy_list, J_validation = trainer.learn(
     loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),
     # optimizer = GradientDescent(learning_rate=0.3),
-    optimizer = GradientDescentMomentum(learning_rate=0.35/1000, momentum=0.95),
+    optimizer = GradientDescentMomentum(learning_rate=0.35/1000, momentum=0.5),
     epochs = epochs,
     batch_size = 1000
 )

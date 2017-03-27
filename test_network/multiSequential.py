@@ -6,7 +6,7 @@ from sklearn import datasets
 
 from layers import LinearLayer, SoftMaxLayer, SigmoidLayer, HeavisideLayer, ConstantLayer, MulLayer, SumLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from optimizers import StocaticGradientDescent, SGDMomentum
+from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel, SumGroup, ParallelGroup, MulGroup, MapGroup
 from genericlayer import GenericLayer
 from trainer import Trainer
@@ -62,6 +62,7 @@ print n7.forward([x,y])
 print n7.backward(np.array([1,1,1]))
 
 
+#(x+y)*(x*y+3)
 
 i = Sequential(MapGroup(GenericLayer,GenericLayer),SumLayer)
 # print i.forward([x,y])
@@ -89,6 +90,9 @@ print oo.forward([[x,y],[x,y]])
 
 oo = MulGroup(i,ii)
 print oo.forward([[x,y],[x,y]])
+
+
+
 # print oo.backward(np.array([1,1,1]))
 
 # n1 = Vanilla(2,2,2)
