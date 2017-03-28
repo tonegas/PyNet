@@ -3,7 +3,7 @@ import numpy as np
 from genericlayer import GenericLayer
 from layers import define_weights, LinearLayer, SignLayer, SigmoidLayer, TanhLayer, SumLayer, MulLayer, ComputationalGraphLayer
 from network import Sequential, SumGroup, MulGroup, ParallelGroup
-from computationalgraph import
+
 
 class Hopfield(GenericLayer):
     def __init__(self, state_size):
