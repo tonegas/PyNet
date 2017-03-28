@@ -18,15 +18,22 @@ class Sequential(GenericLayer, WithElements):
 
     def forward(self, x, update = False):
         aux_x = x
+        # print x
         for layer in self.elements:
+            # print layer
             aux_x = layer.forward(aux_x, update)
+            # print aux_x
+        # print aux_x
         return aux_x
 
     def backward(self, dJdy, optimizer = None):
         aux_dJdx = dJdy
         for layer in reversed(self.elements):
+            # print layer
+            # print aux_dJdx
             aux_dJdx = layer.backward(aux_dJdx, optimizer)
 
+        # print 'END'
         return aux_dJdx
 
 class Parallel(GenericLayer, WithElements):
@@ -56,8 +63,9 @@ class SumGroup(GenericLayer, WithElements):
     def forward(self, x_group, update = False):
         y_group = []
         for (x, element) in izip(x_group, self.elements):
+            # print element
             y_group.append(element.forward(x, update))
-        print y_group
+        # print y_group
         return np.sum(np.array(y_group),0)
 
     def backward(self, dJdy, optimizer = None):
@@ -84,16 +92,24 @@ class MulGroup(GenericLayer, WithElements):
 
 class ParallelGroup(GenericLayer, WithElements):
     def forward(self, x, update = False):
+        # print 'parallel-go'
         y_group = []
         for element in self.elements:
+            # print x
+            # print element
             y_group.append(element.forward(x, update))
         return y_group
 
     def backward(self, dJdy_group, optimizer = None):
+        # print 'parallel-back'
         aux_dJdx = []
         for (dJdy, element) in izip(dJdy_group, self.elements):
+            # print aux_dJdx
             aux_dJdx.append(element.backward(dJdy, optimizer))
+            # print aux_dJdx
 
+        # print 'END-parallel'
+        # print aux_dJdx
         return np.sum(np.array(aux_dJdx),0)
 
 class MapGroup(GenericLayer, WithElements):

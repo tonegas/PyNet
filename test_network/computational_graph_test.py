@@ -10,10 +10,17 @@ class ComputationalGraphLayer(GenericLayer):
         self.net = operation.get()
 
     def forward(self, x, update = False):
-        return self.net.forward(x)
+        return self.net.forward(x, update)
+
+    def backward(self, dJdy, optimizer = None):
+        return self.net.backward(dJdy, optimizer)
 
 class SelectVariable(GenericLayer):
     def __init__(self, variables, var):
+        variables_dict = {}
+        for ind, var in enumerate(variables):
+            variables_dict[var] = ind
+
         self.ind = variables[var]
 
     def forward(self, x_group, update = False):
@@ -169,8 +176,53 @@ nx = Input({'x':0},'x')
 ccc = ComputationalGraphLayer(
     Sigmoid(w1*nx+b)
 )
-
 print ccc.forward(np.array([1.0,2.0,3.0]))
+
+a = Weight(1)
+b = Weight(1)
+c = Weight(1)
+# x = Input(lv,'x')
+quadr = ComputationalGraphLayer(a*nx**2+b*nx+c)
+
+from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
+from optimizers import GradientDescent, GradientDescentMomentum
+from trainer import Trainer
+
+train = []
+for i,x in enumerate(np.linspace(-1,1,50)):
+    train.append((np.array([x]),np.array([3.2*x**2+5.2*x+7.1])))
+
+t = Trainer(show_training=True)
+#
+J_list, dJdy_list = t.learn(
+    model = quadr,
+    train = train,
+    loss = SquaredLoss(),
+    optimizer = GradientDescent(learning_rate=0.15),
+    epochs = 10
+)
+
+
+test = []
+for i,x in enumerate(np.linspace(-10,10,50)):
+    test.append((np.array([x]),np.array([3.2*x**2+5.2*x+7.1])))
+
+import matplotlib.pyplot as plt
+plt.figure(3)
+plt.title('Errors History (J)')
+plt.plot(np.array([x for (x,t) in test]), np.array([t for (x,t) in test]), color='red')
+plt.plot(np.array([x for (x,t) in test]), np.array([quadr.forward(x) for (x,t) in test]), color='green')
+# plt.ylim([0, 2])
+plt.xlabel('x')
+plt.ylabel('y')
+
+print (train[0][1],quadr.forward(train[0][0]))
+
+plt.figure(1)
+plt.title('Points and Function')
+plt.plot(xrange(len(J_list)), J_list, color='red')
+
+plt.show()
 
 # f = Sequential(ccc, LinearLayer(3, 1, weights = np.array([1.0,1.0,3.0,1.0])))
 # print f.forward(xx)

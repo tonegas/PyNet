@@ -1,8 +1,9 @@
 import numpy as np
 
 from genericlayer import GenericLayer
-from layers import define_weights, LinearLayer, SignLayer, SigmoidLayer, TanhLayer, SumLayer, MulLayer
+from layers import define_weights, LinearLayer, SignLayer, SigmoidLayer, TanhLayer, SumLayer, MulLayer, ComputationalGraphLayer
 from network import Sequential, SumGroup, MulGroup, ParallelGroup
+from computationalgraph import
 
 class Hopfield(GenericLayer):
     def __init__(self, state_size):
@@ -107,6 +108,11 @@ class LSTM(GenericLayer):
             Sequential(GenericLayer, TanhLayer),
             Sequential(LinearLayer(input_size+output_size, output_size),SigmoidLayer)
         )
+        # Ct = ComputationalGraphLayer(
+        #     Sigmoid(Wf*xh+bf)*Ct1+
+        #     Sigmoid(Wi*xh+bi)*Tanh(Wc*xh+bc)
+        # )
+
         self.ct = np.zeros(output_size)
         self.ht = np.zeros(output_size)
 

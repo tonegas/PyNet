@@ -9,8 +9,8 @@ class Optimizer(object):
 
 class GradientDescent(Optimizer):
     def __init__(self, learning_rate):
-        self.learning_rate = learning_rate
         super(GradientDescent, self).__init__()
+        self.learning_rate = learning_rate
 
     def update(self, layer, dJdW):
         if self.store:
@@ -21,6 +21,7 @@ class GradientDescent(Optimizer):
 
 class GradientDescentMomentum(Optimizer):
     def __init__(self, learning_rate, momentum):
+        super(GradientDescentMomentum, self).__init__()
         self.learning_rate = learning_rate
         self.momentum = momentum
 

@@ -23,6 +23,8 @@ def define_weights(weights, input_size, output_size):
     else:
         return weights_val
 
+############################### Layer for Sequential ###############################
+
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
@@ -45,46 +47,6 @@ class LinearLayer(GenericLayer):
     def dJdW_gradient(self, dJdy):
         dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
         return dJdW
-
-class WeightMatrixLayer(GenericLayer):
-    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
-        self.L1 = L1
-        self.L2 = L2
-        self.input_size = input_size
-        self.output_size = output_size
-        self.dW = 0
-        self.W = define_weights(weights, input_size, output_size)
-
-    def forward(self, x, update = False):
-        self.x = np.hstack(x)
-        return self.W.dot(self.x)
-
-    def backward(self, dJdy, optimizer = None):
-        dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
-        if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
-        return dJdx
-
-    def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
-        return dJdW
-
-class WeightLayer(GenericLayer):
-    def __init__(self, size, weights ='random'):
-        self.size = size
-        self.dW = 0
-        self.W = define_weights(weights, 1, size)
-
-    def forward(self, x, update = False):
-        return self.W
-
-    def backward(self, dJdy, optimizer = None):
-        if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
-        return np.zeros(self.W.size)
-
-    def dJdW_gradient(self, dJdy):
-        return dJdy
 
 class SoftMaxLayer(GenericLayer):
     def forward(self, x, update = False):
@@ -142,35 +104,12 @@ class ReluLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         return np.maximum(0,self.x > 0)*dJdy
 
-class SumLayer(GenericLayer):
+class NegativeLayer(GenericLayer):
     def forward(self, x, update = False):
-        self.x = np.array(x)
-        return np.sum(self.x,0)
+        return -x
 
     def backward(self, dJdy, optimizer = None):
-        return np.ones(self.x.shape)*dJdy
-
-class MulLayer(GenericLayer):
-    def forward(self, x, update = False):
-        self.x = np.array(x)
-        return np.prod(self.x,0)
-
-    def backward(self, dJdy, optimizer = None):
-        dJdx = []
-        for i in range(self.x.shape[0]):
-            dJdx.append(np.prod(np.delete(self.x,i,0),0))
-
-        return np.array(dJdx)*dJdy
-
-class ConstantLayer(GenericLayer):
-    def __init__(self, value):
-        self.value = value
-
-    def forward(self, x, update = False):
-        return self.value
-
-    def backward(self, dJdy, optimizer = None):
-        return np.zeros(self.value.size)
+        return -dJdy
 
 class NormalizationLayer(GenericLayer):
     def __init__(self, min_in, max_in, min_out = 0, max_out = 1):
@@ -184,3 +123,127 @@ class NormalizationLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)
+
+#############################################################################################
+############################### Layer for Computational Graph ###############################
+
+class ComputationalGraphLayer(GenericLayer):
+    def __init__(self, operation):
+        self.net = operation.get()
+
+    def forward(self, x, update = False):
+        return self.net.forward(x, update)
+
+    def backward(self, dJdy, optimizer = None):
+        return self.net.backward(dJdy, optimizer)
+
+class WeightMatrixLayer(GenericLayer):
+    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
+        self.L1 = L1
+        self.L2 = L2
+        self.input_size = input_size
+        self.output_size = output_size
+        self.dW = 0
+        self.W = define_weights(weights, input_size, output_size)
+
+    def forward(self, x, update = False):
+        self.x = x
+        # print self.W.dot(self.x)
+        # print self.W
+        # print 'input'+str(self.x)
+        return self.W.dot(self.x)
+
+    def backward(self, dJdy, optimizer = None):
+        # print 'WeightLayer'
+        dJdx = self.W.T.dot(dJdy)
+        if optimizer:
+            optimizer.update(self, self.dJdW_gradient(dJdy))
+        # print dJdx
+        return dJdx
+
+    def dJdW_gradient(self, dJdy):
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
+        return dJdW
+
+class WeightLayer(GenericLayer):
+    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0):
+        self.L1 = L1
+        self.L2 = L2
+        self.size = size
+        self.dW = 0
+        self.W = define_weights(weights, 1, size)
+
+    def forward(self, x, update = False):
+        self.x = x
+        return self.W
+
+    def backward(self, dJdy, optimizer = None):
+        if optimizer:
+            optimizer.update(self, self.dJdW_gradient(dJdy))
+
+        if type(self.x) is list:
+            return [np.zeros(self.x[ind].size) for ind in range(len(self.x))]
+        else:
+            return np.zeros(self.x.size)
+
+
+    def dJdW_gradient(self, dJdy):
+        return dJdy + self.L1 * np.sign(self.W) + self.L2 * self.W
+
+class SelectVariableLayer(GenericLayer):
+    def __init__(self, variables, variable):
+        self.variables = variables
+        variables_dict = {}
+        for ind, var in enumerate(variables):
+            variables_dict[var] = ind
+
+        self.ind = variables_dict[variable]
+
+    def forward(self, x_group, update = False):
+        self.x = x_group
+        # print 'select var '+str(x_group)
+        if type(x_group) is list:
+            return x_group[self.ind]
+        else:
+            return x_group
+
+    def backward(self, dJdy, optimizer = None):
+        # print 'SelectVariableLayer'
+        # print dJdy
+        if len(self.variables) == 1:
+            return dJdy
+        else:
+            # print [dJdy if ind == self.ind else np.zeros(self.x[ind].shape) for ind,var in enumerate(self.variables)]
+            # print 'exit'
+            return [dJdy if ind == self.ind else np.zeros(self.x[ind].shape) for ind,var in enumerate(self.variables)]
+
+class ConstantLayer(GenericLayer):
+    def __init__(self, value):
+        self.value = value
+
+    def forward(self, x, update = False):
+        return self.value
+
+    def backward(self, dJdy, optimizer = None):
+        return np.zeros(self.value.size)
+
+class SumLayer(GenericLayer):
+    def forward(self, x, update = False):
+        self.x = np.array(x)
+        return np.sum(self.x,0)
+
+    def backward(self, dJdy, optimizer = None):
+        return np.array([np.ones(element.size)*dJdy for element in self.x])
+
+class MulLayer(GenericLayer):
+    def forward(self, x, update = False):
+        self.x = np.array(x)
+        return np.prod(self.x,0)
+
+    def backward(self, dJdy, optimizer = None):
+        dJdx = []
+        for i in range(self.x.shape[0]):
+            dJdx.append(np.prod(np.delete(self.x,i,0),0))
+        return np.array([element*dJdy for element in dJdx])
+
+#############################################################################################
