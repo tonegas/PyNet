@@ -35,6 +35,7 @@ class Trainer():
                     # print 'y'+str(y)
                     J = loss.loss(y,t)
 
+                    print y,t
                     dJdy = loss.dJdy_gradient(y,t)
 
                     if this_batch_size == i+1:

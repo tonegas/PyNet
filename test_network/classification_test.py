@@ -42,11 +42,10 @@ def gen_data():
     # print data
     # print targets
 
-    target_vect = to_one_hot_vect(targets,num_classes)
-    # target_vect = targets
+    # targets = to_one_hot_vect(targets,num_classes)
 
-    train = zip(np.array(data[:n *9/10]).astype(np.float), np.array(target_vect[:n *9/10]).astype(np.float))
-    test = zip(np.array(data[n /10:]).astype(np.float), np.array(target_vect[n /10:]).astype(np.float))
+    train = zip(np.array(data[:n *9/10]).astype(np.float), np.array(targets[:n *9/10]).astype(np.float))
+    test = zip(np.array(data[n /10:]).astype(np.float), np.array(targets[n /10:]).astype(np.float))
 
     return train, test
 
@@ -55,6 +54,7 @@ train, test = gen_data()
 
 validation = train[:n/10]
 train = train[n/10+1:]
+
 
 model = Sequential([
     LinearLayer(2, 1, weights='random'),

@@ -2,7 +2,6 @@ import numpy as np
 from genericlayer import GenericLayer
 
 def define_weights(weights, input_size, output_size):
-    weights_val = None
     if type(weights) == str:
         if weights == 'random':
             weights_val = np.random.rand(output_size, input_size)
@@ -18,10 +17,12 @@ def define_weights(weights, input_size, output_size):
         weights_val = weights.reshape(output_size, input_size)
     else:
         raise Exception('Type not correct!')
-    if input_size == 1:
-        return weights_val.reshape(output_size)
-    else:
-        return weights_val
+    # if input_size == 1:
+    #     return weights_val.reshape(output_size)
+    # elif output_size == 1:
+    #     return weights_val.reshape(input_size)
+    # else:
+    return weights_val
 
 ############################### Layer for Sequential ###############################
 
@@ -123,6 +124,7 @@ class NormalizationLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)
+9
 
 #############################################################################################
 ############################### Layer for Computational Graph ###############################
