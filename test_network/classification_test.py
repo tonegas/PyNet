@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import time
 from sklearn import datasets
 
-from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer
+from layers import LinearLayer, TanhLayer, SoftMaxLayer, ReluLayer, SigmoidLayer, HeavisideLayer, NormalizationLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel
@@ -14,7 +14,7 @@ classes = ["o","v","x",".","s"]
 colors = ['r', 'g', 'b', 'y', 'o']
 num_classes = 2
 n = 200
-epochs = 100
+epochs = 200
 p = Printer2D()
 
 def to_one_hot_vect(vect, num_classes):
@@ -42,10 +42,11 @@ def gen_data():
     # print data
     # print targets
 
-    # targets = to_one_hot_vect(targets,num_classes)
+    targets = to_one_hot_vect(targets,num_classes)
 
     train = zip(np.array(data[:n *9/10]).astype(np.float), np.array(targets[:n *9/10]).astype(np.float))
     test = zip(np.array(data[n /10:]).astype(np.float), np.array(targets[n /10:]).astype(np.float))
+
 
     return train, test
 
@@ -57,16 +58,16 @@ train = train[n/10+1:]
 
 
 model = Sequential([
-    LinearLayer(2, 1, weights='random'),
-    #TanhLayer(),
-    SigmoidLayer(),
+    LinearLayer(2, 20, weights='random'),
+    TanhLayer(),
+    #SigmoidLayer(),
     # HeavisideLayer(),
-    # LinearLayer(20, 20, weights='random'),
+    # LinearLayer(10, 20, weights='random'),
     # SigmoidLayer(),
-    # LinearLayer(20, num_classes, weights='random',L1=0.001),
+    LinearLayer(20, num_classes, weights='random',L1=0.001),
     # ReluLayer(),
     # SigmoidLayer()
-    # SoftMaxLayer()
+    SoftMaxLayer()
 ])
 
 # model = Sequential([
@@ -106,7 +107,7 @@ for i, (x,target) in enumerate(test):
 
 display = ShowTraining(epochs_num = epochs)
 
-trainer = Trainer(show_training = True, show_function=display.show)
+trainer = Trainer(show_training = True, show_function = display.show)
 
 t = time.time()
 
@@ -117,9 +118,9 @@ J_train_list, dJdy_list, J_validation_list = trainer.learn(
     loss = NegativeLogLikelihoodLoss(),
     # loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),
-    optimizer = GradientDescent(learning_rate=0.15),
-    # optimizer = GradientDescentMomentum(learning_rate=0.011, momentum=0.1),
-    batch_size = 1,
+    # optimizer = GradientDescent(learning_rate = 0.15/110),
+    optimizer = GradientDescentMomentum(learning_rate=0.005, momentum=0.8),
+    batch_size = 100,
     epochs = epochs
 )
 
@@ -136,7 +137,7 @@ for i, (x,target) in enumerate(test):
     y2.append(model.forward(x))
 #
 
-p.print_model(100, model, [x for (x,t) in train])
+# p.print_model(100, model, [x for (x,t) in train])
 
 p.draw_decision_surface(10, model, test)
 p.compare_data(10, train, y1, num_classes, colors, classes)

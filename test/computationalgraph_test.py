@@ -2,14 +2,14 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-from computationalgraph import Input, Weight, MatrixWeight, Sigmoid
+from computationalgraphprova import Input, VWeight, MWeight, Sigmoid
 from layers import ComputationalGraphLayer
 
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from network import Sequential
 
 
-from layers import WeightLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, LinearLayer, WeightMatrixLayer
+from layers import WeightVectorLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, LinearLayer, WeightMatrixLayer
 from network import ParallelGroup, Sequential, MapGroup, SumGroup, MulGroup
 from genericlayer import GenericLayer, WithElements
 
@@ -32,6 +32,11 @@ class ComputationGraphTests(unittest.TestCase):
         dJdx = net.backward(np.array([1.0,1.0,1.0,1.0]))
         self.assertEqual(dJdx.shape,(4,))
         assert_almost_equal(dJdx,-4*(-0.575 - 0.9*xv + xv**3))
+        net = ComputationalGraphLayer(x-x)
+        xv = np.array([1.3])
+        out = net.forward(xv)
+        self.assertEqual(out.shape,(1,))
+        assert_almost_equal(out,np.array(xv-xv))
 
     def test_multi_input(self):
         list_var = ['x','y']#Here the order is important to understand the order of variable in the input group
@@ -40,10 +45,10 @@ class ComputationGraphTests(unittest.TestCase):
         xv = np.array([1.3])
         yv = np.array([2.3])
         xyv = [xv,yv]
-        net = ComputationalGraphLayer(y*x+x*x*3.0+y*y*4.3+3.1-1-x*(y**3+x*1.2+2)+1)
+        net = ComputationalGraphLayer(y*x+x*x*3.0+y*y*4.3+3.1-1.2-x*(y**3+x*1.2+2)+1)
         out = net.forward(xyv)
         self.assertEqual(out.shape,(1,))
-        assert_almost_equal(out,yv*xv+xv*xv*3.0+yv*yv*4.3+3.1-1-xv*(yv**3+xv*1.2+2)+1)
+        assert_almost_equal(out,yv*xv+xv*xv*3.0+yv*yv*4.3+3.1-1.2-xv*(yv**3+xv*1.2+2)+1)
         dJdy = net.backward(np.array([1.0]))
         self.assertEqual(len(dJdy),2)
         for element in dJdy:
@@ -70,9 +75,9 @@ class ComputationGraphTests(unittest.TestCase):
         av = np.array([2.1])
         bv = np.array([3.2])
         cv = np.array([5.1])
-        a = Weight(1, weights = av)
-        b = Weight(1, weights = bv)
-        c = Weight(1, weights = cv)
+        a = VWeight(1, weights = av)
+        b = VWeight(1, weights = bv)
+        c = VWeight(1, weights = cv)
         net = ComputationalGraphLayer(a*x**2+b*x+c)
         out = net.forward(xv)
         self.assertEqual(out.shape,(1,))
@@ -97,7 +102,7 @@ class ComputationGraphTests(unittest.TestCase):
         xv = np.array([1.3,1.1,7.5])
         x = Input(['x'],'x')
         Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
-        W = MatrixWeight(3, 2, weights = Wv)
+        W = MWeight(3, 2, weights = Wv)
         net = ComputationalGraphLayer(W*x)
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
@@ -109,9 +114,9 @@ class ComputationGraphTests(unittest.TestCase):
         Wv1 = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
         Wv2 = np.array([[2.1,3.1],[7.4,2.2],[3.2,2.2],[1.1,1.2]])
         Wv3 = np.array([[2.1,3.1,7.4,2.2],[3.2,2.2,1.1,1.2],[2.2,3.2,4.2,7.4]])
-        W1 = MatrixWeight(3, 2, weights = Wv1)
-        W2 = MatrixWeight(2, 4, weights = Wv2)
-        W3 = MatrixWeight(4, 3, weights = Wv3)
+        W1 = MWeight(3, 2, weights = Wv1)
+        W2 = MWeight(2, 4, weights = Wv2)
+        W3 = MWeight(4, 3, weights = Wv3)
         net = ComputationalGraphLayer(W3*W2*W1*x)
         out = net.forward(xv)
         self.assertEqual(out.shape,(3,))
@@ -133,9 +138,9 @@ class ComputationGraphTests(unittest.TestCase):
         xv = np.array([1.5,1.1,7.5])
         x = Input(['x'],'x')
         Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
-        W = MatrixWeight(3, 2, weights = Wv)
+        W = MWeight(3, 2, weights = Wv)
         bv = np.array([1.3,5.1])
-        b = Weight(2, weights = bv)
+        b = VWeight(2, weights = bv)
         net = ComputationalGraphLayer(W*x+b)
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
@@ -155,10 +160,10 @@ class ComputationGraphTests(unittest.TestCase):
 
         Wv1 = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
         Wv2 = np.array([[6.1,5.1,2.2,4.3],[1.2,1.2,5.2,5.1]])
-        W1 = MatrixWeight(3, 2, weights = Wv1)
-        W2 = MatrixWeight(4, 2, weights = Wv2)
+        W1 = MWeight(3, 2, weights = Wv1)
+        W2 = MWeight(4, 2, weights = Wv2)
         bv = np.array([1.3,5.1])
-        b = Weight(2, weights = bv)
+        b = VWeight(2, weights = bv)
         net = ComputationalGraphLayer(W1*x+b+W2*y-b)
         out = net.forward(xyv)
         self.assertEqual(out.shape,(2,))
@@ -174,9 +179,9 @@ class ComputationGraphTests(unittest.TestCase):
         xv = np.array([0.5,0.1,0.5])
         x = Input(['x'],'x')
         Wv = np.array([[0.1,0.1,0.2],[0.5,0.2,0.2]])
-        W = MatrixWeight(3, 2, weights = Wv)
+        W = MWeight(3, 2, weights = Wv)
         bv = np.array([0.3,0.1])
-        b = Weight(2, weights = bv)
+        b = VWeight(2, weights = bv)
         net = ComputationalGraphLayer(Sigmoid(W*x+b))
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
@@ -196,4 +201,16 @@ class ComputationGraphTests(unittest.TestCase):
         dJdy2 = net.backward(np.array([1.0,1.0]))
         assert_almost_equal(dJdy,dJdy2)
 
+    # def test_hstack(self):
+    #     list_var = ['x','y']
+    #     x = Input(list_var,'x')
+    #     y = Input(list_var,'y')
+    #     xv = np.array([1.5,1.1,7.5])
+    #     yv = np.array([3.5,3.1,2.5,4.3])
+    #     Wv = np.array([[2.1,3.1,2.2,2.2,3.2,4.2,3.1]])
+    #     W = MatrixWeight(7, 1, weights = Wv)
+    #     bv = np.array([0.3])
+    #     b = Weight(1, weights = bv)
+    #     xyv = [xv,yv]
+    #     net = ComputationalGraphLayer(Sigmoid(W*HStack(x,y)+b))
 

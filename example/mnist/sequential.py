@@ -44,20 +44,20 @@ else:
     #Two layer network
     model = Sequential([
         NormalizationLayer(0,255,-0.1,0.1),
-        LinearLayer(784, 50, weights='norm_random'),
-        TanhLayer,
-        LinearLayer(50, 10, weights='norm_random'),
-        TanhLayer,
+        LinearLayer(784, 10, weights='norm_random'),
+        # TanhLayer,
+        # LinearLayer(50, 10, weights='norm_random'),
+        # TanhLayer,
         # NormalizationLayer(0,10,0,1),
         # SigmoidLayer()
     ])
 
-display = ShowTraining(epochs_num = epochs)
+# display = ShowTraining(epochs_num = epochs)
 
-trainer = Trainer(show_training = True, show_function = display.show)
+trainer = Trainer(show_training = False)#, show_function = display.show)
 
-validation = train[0:1000]
-train = train[1001:]
+validation = train[0:10000]
+train = train[10000:]
 
 J_list, dJdy_list, J_validation = trainer.learn(
     model = model,
@@ -67,9 +67,9 @@ J_list, dJdy_list, J_validation = trainer.learn(
     loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),
     # optimizer = GradientDescent(learning_rate=0.3),
-    optimizer = GradientDescentMomentum(learning_rate=0.35/1000, momentum=0.5),
+    optimizer = GradientDescentMomentum(learning_rate=0.35/10, momentum=0.5),
     epochs = epochs,
-    batch_size = 1000
+    batch_size = 10
 )
 
 test_results(model,train,test)

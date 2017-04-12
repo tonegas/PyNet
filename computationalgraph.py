@@ -1,7 +1,7 @@
 import numpy as np
 
-from layers import WeightLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, \
-    WeightMatrixLayer, NegativeLayer, SelectVariableLayer
+from layers import WeightVectorLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, \
+    WeightMatrixLayer, NegativeLayer, SelectVariableLayer, TanhLayer
 from network import ParallelGroup, Sequential, SumGroup
 from genericlayer import GenericLayer, WithElements
 
@@ -75,23 +75,23 @@ class Operation(object):
         return self.net
 
 
-class Weight(Operation):
+class VWeight(Operation):
     def __init__(self, *args, **kwargs):
-        super(Weight,self).__init__()
-        self.net = WeightLayer(*args, **kwargs)
+        super(VWeight,self).__init__()
+        self.net = WeightVectorLayer(*args, **kwargs)
 
     def get(self):
         return self.net
 
-class MatrixWeight(Operation):
+class MWeight(Operation):
     def __init__(self, *args, **kwargs):
         self.a = args
         self.b = kwargs
-        super(MatrixWeight,self).__init__()
+        super(MWeight,self).__init__()
         self.net = WeightMatrixLayer(*args, **kwargs)
 
     def __mul__(self, other):
-        o = MatrixWeight(*self.a, **self.b)
+        o = MWeight(*self.a, **self.b)
         o.net = Sequential(
             other.get(),
             self.get()
@@ -119,3 +119,15 @@ class Sigmoid(Operation):
 
     def get(self):
         return self.net
+
+class Tanh(Operation):
+    def __init__(self, operation):
+        super(Tanh,self).__init__()
+        self.net = Sequential(
+            operation.get(),
+            TanhLayer
+        )
+
+    def get(self):
+        return self.net
+

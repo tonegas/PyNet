@@ -17,12 +17,12 @@ def define_weights(weights, input_size, output_size):
         weights_val = weights.reshape(output_size, input_size)
     else:
         raise Exception('Type not correct!')
-    # if input_size == 1:
-    #     return weights_val.reshape(output_size)
-    # elif output_size == 1:
-    #     return weights_val.reshape(input_size)
-    # else:
-    return weights_val
+    if input_size == 1:
+        return weights_val.reshape(output_size)
+    elif output_size == 1:
+        return weights_val.reshape(input_size)
+    else:
+        return weights_val
 
 ############################### Layer for Sequential ###############################
 
@@ -124,7 +124,7 @@ class NormalizationLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)
-9
+
 
 #############################################################################################
 ############################### Layer for Computational Graph ###############################
@@ -167,7 +167,7 @@ class WeightMatrixLayer(GenericLayer):
         dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
         return dJdW
 
-class WeightLayer(GenericLayer):
+class WeightVectorLayer(GenericLayer):
     def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
@@ -247,5 +247,3 @@ class MulLayer(GenericLayer):
         for i in range(self.x.shape[0]):
             dJdx.append(np.prod(np.delete(self.x,i,0),0))
         return np.array([element*dJdy for element in dJdx])
-
-#############################################################################################

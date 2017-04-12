@@ -12,6 +12,30 @@ class Trainer():
         model.backward(dJdy, optimizer)
         return J, dJdy
 
+    def learn_minibatch(self, model, batch, loss, optimizer):
+        this_batch_size = len(batch)
+        # print this_batch_size
+        optimizer.store = True
+        J_train_list = 0
+        dJdy_list = 0
+        for i,(x,t) in enumerate(batch):
+            # print 'x'+str(x)
+            y = model.forward(x, True)
+            # print 'y'+str(y)
+            J = loss.loss(y,t)
+
+            # print y,t
+            dJdy = loss.dJdy_gradient(y,t)
+
+            if this_batch_size == i+1:
+                optimizer.store = False
+
+            model.backward(dJdy, optimizer)
+
+            J_train_list += np.linalg.norm(J)/this_batch_size
+            dJdy_list += np.linalg.norm(dJdy)/this_batch_size
+        return J_train_list, dJdy_list
+
     def learn(self, model, train, loss, optimizer, epochs, batch_size = 1, validation = None):
         J_train_list = np.zeros(epochs)
         J_validation_list = np.zeros(epochs)
@@ -26,26 +50,9 @@ class Trainer():
             train_vect = np.array_split(train, batches_num)
             # print train_vect
             for batch in train_vect:
-                this_batch_size = len(batch)
-                # print this_batch_size
-                optimizer.store = True
-                for i,(x,t) in enumerate(batch):
-                    # print 'x'+str(x)
-                    y = model.forward(x, True)
-                    # print 'y'+str(y)
-                    J = loss.loss(y,t)
-
-                    print y,t
-                    dJdy = loss.dJdy_gradient(y,t)
-
-                    if this_batch_size == i+1:
-                        optimizer.store = False
-
-                    model.backward(dJdy, optimizer)
-
-                    J_train_list[epoch] += np.linalg.norm(J)/train_num
-                    dJdy_list[epoch] += np.linalg.norm(dJdy)/train_num
-
+                J, dJdy = self.learn_minibatch(model, batch, loss, optimizer)
+                J_train_list[epoch] += J/batches_num
+                dJdy_list[epoch] += dJdy/batches_num
 
             if validation:
                 for x,t in validation:
