@@ -1,94 +1,63 @@
 import numpy as np
 
-from layers import WeightVectorLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, \
-    WeightMatrixLayer, NegativeLayer, SelectVariableLayer, TanhLayer
-from network import ParallelGroup, Sequential, SumGroup
+import layers
+from network import  Sequential, SequentialMul, SequentialSum, SequentialNegative
 from genericlayer import GenericLayer, WithElements
 
-class Operation(object):
-    def __init__(self):
-        self.net = None
+class Op(object):
+    def __init__(self,net):
+        self.net = net
 
     def __sub__(self, other):
         return self.__add__(-other)
 
     def __neg__(self):
-        o = Operation()
-        o.net = Sequential(
-            self.get(),
-            NegativeLayer()
-        )
-        return o
+        return Op(SequentialNegative(self.get()))
 
     def __add__(self, other):
-        if isinstance(other, Input) or isinstance(other, Operation):
-            o = Operation()
-            o.net = Sequential(
-                ParallelGroup(
-                    self.get(),
-                    other.get()
-                ),SumLayer
-            )
+        if isinstance(other, Input) or isinstance(other, Op):
+            if isinstance(self.net, SequentialSum):
+                return Op(self.net.add(other.get()))
+            return Op(SequentialSum(self.get(),other.get()))
+
         elif isinstance(other, int) or isinstance(other, float):
-            o = Operation()
-            o.net = Sequential(
-                ParallelGroup(
-                    self.get(),
-                    ConstantLayer(np.array([other]).astype(float))
-                ),SumLayer
-            )
+            if isinstance(self.net, SequentialSum):
+                return Op(self.net.add(layers.ConstantLayer(np.array([other]).astype(float))))
+            return Op(SequentialSum(self.get(),layers.ConstantLayer(np.array([other]).astype(float))))
+
         else:
             raise Exception('Type is not supported!')
-        return o
 
     def __pow__(self, other):
-        o = Operation()
-        o.net = Sequential(
-            ParallelGroup(
-                [self.get() for i in range(other)]
-            ),MulLayer
-        )
-        return o
+        return Op(SequentialMul(*[self.get() for i in range(other)]))
 
     def __mul__(self, other):
-        if isinstance(other, Input) or isinstance(other, Operation):
-            o = Operation()
-            o.net = Sequential(
-                ParallelGroup(
-                    self.get(),
-                    other.get()
-                ),MulLayer
-            )
+        if isinstance(other, Input) or isinstance(other, Op):
+            if isinstance(self.net, SequentialMul):
+                return Op(self.net.add(other.get()))
+            return Op(SequentialMul(self.get(),other.get()))
+
         elif isinstance(other, int) or isinstance(other, float):
-            o = Operation()
-            o.net = Sequential(
-                ParallelGroup(
-                    self.get(),
-                    ConstantLayer(np.array([other]).astype(float))
-                ),MulLayer
-            )
+            if isinstance(self.net, SequentialMul):
+                return Op(self.net.add(layers.ConstantLayer(np.array([other]).astype(float))))
+            return Op(SequentialMul(self.get(),layers.ConstantLayer(np.array([other]).astype(float))))
+
         else:
             raise Exception('Type is not supported!')
-        return o
 
     def get(self):
         return self.net
 
 
-class VWeight(Operation):
+class VWeight(Op):
     def __init__(self, *args, **kwargs):
-        super(VWeight,self).__init__()
-        self.net = WeightVectorLayer(*args, **kwargs)
+        super(VWeight,self).__init__(layers.VWeightLayer(*args, **kwargs))
 
-    def get(self):
-        return self.net
-
-class MWeight(Operation):
+class MWeight(Op):
     def __init__(self, *args, **kwargs):
         self.a = args
         self.b = kwargs
-        super(MWeight,self).__init__()
-        self.net = WeightMatrixLayer(*args, **kwargs)
+        super(MWeight,self).__init__(layers.MWeightLayer(*args, **kwargs))
 
     def __mul__(self, other):
         o = MWeight(*self.a, **self.b)
@@ -98,36 +67,38 @@ class MWeight(Operation):
         )
         return o
 
-    def get(self):
-        return self.net
+class MWeightBias(Op):
+    def __init__(self, *args, **kwargs):
+        self.a = args
+        self.b = kwargs
+        super(MWeightBias,self).__init__(layers.LinearLayer(*args, **kwargs))
 
-class Input(Operation):
+    def __mul__(self, other):
+        o = MWeight(*self.a, **self.b)
+        o.net = Sequential(
+            other.get(),
+            self.get()
+        )
+        return o
+
+class Input(Op):
     def __init__(self, dict_variables, variable):
-        super(Input,self).__init__()
-        self.net = SelectVariableLayer(dict_variables, variable)
+        super(Input,self).__init__(layers.SelectVariableLayer(dict_variables, variable))
 
-    def get(self):
-        return self.net
-
-class Sigmoid(Operation):
+class Sigmoid(Op):
     def __init__(self, operation):
-        super(Sigmoid,self).__init__()
-        self.net = Sequential(
-            operation.get(),
-            SigmoidLayer
+        super(Sigmoid,self).__init__(
+            Sequential(
+                operation.get(),
+                layers.SigmoidLayer
+            )
         )
 
-    def get(self):
-        return self.net
-
-class Tanh(Operation):
+class Tanh(Op):
     def __init__(self, operation):
-        super(Tanh,self).__init__()
-        self.net = Sequential(
-            operation.get(),
-            TanhLayer
+        super(Tanh,self).__init__(
+            Sequential(
+                operation.get(),
+                layers.TanhLayer
+            )
         )
-
-    def get(self):
-        return self.net
-

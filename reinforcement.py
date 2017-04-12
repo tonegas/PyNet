@@ -102,7 +102,7 @@ class Agent(GenericLayer):
         return self.y
 
     def softmax(self, x):
-        pass
+        raise Exception('Not Implemented!')
 
     def forward(self, x, update = False):
         if self.policy == 0:

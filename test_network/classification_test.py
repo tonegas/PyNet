@@ -9,6 +9,7 @@ from optimizers import GradientDescent, GradientDescentMomentum
 from network import Sequential, Parallel
 from trainer import Trainer
 from printers import Printer2D, ShowTraining
+from utils import to_one_hot_vect
 
 classes = ["o","v","x",".","s"]
 colors = ['r', 'g', 'b', 'y', 'o']
@@ -17,12 +18,6 @@ n = 200
 epochs = 200
 p = Printer2D()
 
-def to_one_hot_vect(vect, num_classes):
-    on_hot_vect = []
-    for i,target in enumerate(vect):
-        on_hot_vect.append(np.zeros(num_classes))
-        on_hot_vect[i][target] = 1
-    return on_hot_vect
 
 def gen_data():
     # N clusters:
@@ -42,7 +37,7 @@ def gen_data():
     # print data
     # print targets
 
-    targets = to_one_hot_vect(targets,num_classes)
+    targets = [to_one_hot_vect(target,num_classes) for target in targets]
 
     train = zip(np.array(data[:n *9/10]).astype(np.float), np.array(targets[:n *9/10]).astype(np.float))
     test = zip(np.array(data[n /10:]).astype(np.float), np.array(targets[n /10:]).astype(np.float))

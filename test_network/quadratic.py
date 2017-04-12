@@ -2,32 +2,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 
-from layers import LinearLayer, WeightLayer, MulLayer, SumLayer
+from layers import LinearLayer, MulLayer, SumLayer, VWeightLayer, ComputationalGraphLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import GradientDescent, GradientDescentMomentum
-from network import Sequential, Parallel, SumGroup, ParallelGroup, MulGroup, MapGroup
+from network import Sequential, Parallel
+from groupnetworks import ParallelGroup, SumGroup, MulGroup
 from genericlayer import GenericLayer
 from trainer import Trainer
+from computationalgraph import VWeight, Input
 
 # y = a*x^2+b*x+c
-n = Sequential(
-        ParallelGroup(
-            Sequential(
-                ParallelGroup(
-                    GenericLayer,
-                    GenericLayer,
-                    WeightLayer(1)
-                ),MulLayer
-            ),
-            Sequential(
-                ParallelGroup(
-                    GenericLayer,
-                    WeightLayer(1),
-                ),MulLayer
-            ),
-            WeightLayer(1)
-        ),SumLayer
-    )
+# n = Sequential(
+#         ParallelGroup(
+#             Sequential(
+#                 ParallelGroup(
+#                     GenericLayer,
+#                     GenericLayer,
+#                     VWeightLayer(1)
+#                 ),MulLayer
+#             ),
+#             Sequential(
+#                 ParallelGroup(
+#                     GenericLayer,
+#                     VWeightLayer(1),
+#                 ),MulLayer
+#             ),
+#             VWeightLayer(1)
+#         ),SumLayer
+#     )
 
 #equal to
 # n = Sequential(
@@ -36,7 +38,7 @@ n = Sequential(
 #                 ParallelGroup(
 #                     GenericLayer,
 #                     GenericLayer,
-#                     WeightLayer(1)
+#                     VWeightLayer(1)
 #                 ),MulLayer
 #             ),
 #             LinearLayer(1,1)
@@ -44,27 +46,35 @@ n = Sequential(
 #     )
 
 #equal to
-n = Sequential(
-        ParallelGroup(GenericLayer,GenericLayer,GenericLayer),
-        SumGroup(
-            Sequential(
-                ParallelGroup(GenericLayer,GenericLayer,GenericLayer),
-                MulGroup(
-                    GenericLayer,
-                    GenericLayer,
-                    WeightLayer(1)
-                )
-            ),
-            Sequential(
-                ParallelGroup(GenericLayer,GenericLayer),
-                MulGroup(
-                    GenericLayer,
-                    WeightLayer(1)
-                )
-            ),
-            WeightLayer(1)
-        )
-    )
+# n = Sequential(
+#         ParallelGroup(GenericLayer,GenericLayer,GenericLayer),
+#         SumGroup(
+#             Sequential(
+#                 ParallelGroup(GenericLayer,GenericLayer,GenericLayer),
+#                 MulGroup(
+#                     GenericLayer,
+#                     GenericLayer,
+#                     VWeightLayer(1)
+#                 )
+#             ),
+#             Sequential(
+#                 ParallelGroup(GenericLayer,GenericLayer),
+#                 MulGroup(
+#                     GenericLayer,
+#                     VWeightLayer(1)
+#                 )
+#             ),
+#             VWeightLayer(1)
+#         )
+#     )
+
+#equal to
+varx = Input('x','x')
+a = VWeight(1)
+b = VWeight(1)
+c = VWeight(1)
+# x = Input(lv,'x')
+n = ComputationalGraphLayer(a*varx**2+b*varx+c)
 
 #
 train = []

@@ -1,5 +1,5 @@
 import numpy as np
-from classicnetwork import Vanilla
+from standart_network.vanilla import Vanilla
 from trainer import Trainer
 from losses import CrossEntropyLoss
 from optimizers import GradientDescentMomentum

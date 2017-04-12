@@ -1,7 +1,7 @@
 from mnist_load import load_mnist_dataset
 import numpy as np
 import matplotlib.pyplot as plt
-from classicnetwork import Kohonen
+from standart_network.kohonen import Kohonen
 
 
 def plotWeights(model,ind):

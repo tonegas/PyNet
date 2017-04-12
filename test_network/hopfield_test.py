@@ -1,6 +1,6 @@
 import numpy as np
 
-from classicnetwork import Hopfield
+from standart_network.hopfield import Hopfield
 
 n = Hopfield(20)
 

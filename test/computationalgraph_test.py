@@ -2,16 +2,12 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-from computationalgraphprova import Input, VWeight, MWeight, Sigmoid
+from computationalgraph import Input, VWeight, MWeight, Sigmoid
 from layers import ComputationalGraphLayer
 
-from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from network import Sequential
+from layers import  SigmoidLayer, LinearLayer
+from network import  Sequential
 
-
-from layers import WeightVectorLayer, SumLayer, MulLayer, ConstantLayer, SigmoidLayer, LinearLayer, WeightMatrixLayer
-from network import ParallelGroup, Sequential, MapGroup, SumGroup, MulGroup
-from genericlayer import GenericLayer, WithElements
 
 
 class ComputationGraphTests(unittest.TestCase):

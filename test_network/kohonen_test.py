@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-from classicnetwork import Kohonen
+from standart_network.kohonen import Kohonen
 from printers import Printer2D
 from sklearn import datasets
 

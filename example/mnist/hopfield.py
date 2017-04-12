@@ -1,7 +1,7 @@
 from mnist_load import load_mnist_dataset
 import numpy as np
 import matplotlib.pyplot as plt
-from classicnetwork import Hopfield
+from standart_network.hopfield import Hopfield
 from layers import NormalizationLayer, SignLayer
 from network import Sequential
 
