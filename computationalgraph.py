@@ -102,3 +102,12 @@ class Tanh(Op):
                 layers.TanhLayer
             )
         )
+
+class Softmax(Op):
+    def __init__(self, operation):
+        super(Softmax,self).__init__(
+            Sequential(
+                operation.get(),
+                layers.SoftMaxLayer
+            )
+        )

@@ -67,9 +67,9 @@ class VWeightLayer(GenericLayer):
             optimizer.update(self, self.dJdW_gradient(dJdy))
 
         if type(self.x) is list:
-            return [np.zeros(self.x[ind].size) for ind in range(len(self.x))]
+            return [np.zeros_like(self.x[ind]) for ind in range(len(self.x))]
         else:
-            return np.zeros(self.x.size)
+            return np.zeros_like(self.x)
 
     def dJdW_gradient(self, dJdy):
         return dJdy + self.L1 * np.sign(self.W) + self.L2 * self.W

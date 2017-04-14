@@ -28,8 +28,7 @@ class GradientDescentMomentum(Optimizer):
     def update(self, layer, dJdW):
         if not hasattr(layer,'velocity'):
             layer.velocity = 0
-        else:
-            layer.velocity = (self.momentum*layer.velocity)-(self.learning_rate*dJdW)
+        layer.velocity = (self.momentum*layer.velocity)-(self.learning_rate*dJdW)
 
         if self.store:
             layer.dW += layer.velocity
@@ -37,10 +36,23 @@ class GradientDescentMomentum(Optimizer):
             layer.W += (layer.dW + layer.velocity)
             layer.dW = 0
 
-        # layer.W += layer.velocity
+class AdaGrad(Optimizer):
+    def __init__(self, learning_rate):
+        super(AdaGrad, self).__init__()
+        self.learning_rate = learning_rate
+        self.delta = 10**-7
 
-class AdaGrad():
-    pass
+    def update(self, layer, dJdW):
+        if not hasattr(layer,'accumulation'):
+            layer.r = 0
+        layer.r += np.multiply(dJdW,dJdW)
+
+        variation = self.learning_rate/(self.delta+np.sqrt(layer.r))
+        if self.store:
+            layer.dW -= np.multiply(variation,dJdW)
+        else:
+            layer.W += layer.dW - np.multiply(variation,dJdW)
+            layer.dW = 0
 
 class RmsProp():
     pass

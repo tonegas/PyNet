@@ -50,6 +50,7 @@ class Parallel(GenericLayer, WithElements):
             a = b
         return np.sum(np.array(aux_dJdx),0)
 
+
 class SequentialSum(GenericLayer, WithElements):
     def __init__(self, *args):
         self.vect_size = []
@@ -63,10 +64,9 @@ class SequentialSum(GenericLayer, WithElements):
         return np.sum(self.x,0)
 
     def backward(self, dJdy, optimizer = None):
-        dJdx_group = np.array([np.ones(element.size)*dJdy for element in self.x_group])
         aux_dJdx = []
-        for (dJdx, element) in izip(dJdx_group, self.elements):
-            aux_dJdx.append(element.backward(dJdx, optimizer))
+        for (x, element) in izip(self.x_group, self.elements):
+            aux_dJdx.append(element.backward(np.ones(x.size)*dJdy, optimizer))
         return np.sum(np.array(aux_dJdx),0)
 
 class SequentialMul(GenericLayer, WithElements):

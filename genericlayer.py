@@ -15,6 +15,13 @@ class StoreNetwork:
         else:
             raise Exception('File does not exist!')
 
+    @staticmethod
+    def load_or_create(file, net):
+        if os.path.isfile(file):
+            f = open(file, "r")
+            return pickle.load(f)
+        else:
+            return net
 
 class GenericLayer(StoreNetwork):
     def numeric_gradient(self,x):
