@@ -15,7 +15,7 @@ classes = ["o","v","x",".","s"]
 colors = ['r', 'g', 'b', 'y', 'o']
 num_classes = 2
 n = 200
-epochs = 200
+epochs = 75
 p = Printer2D()
 
 
@@ -47,10 +47,6 @@ def gen_data():
 
 
 train, test = gen_data()
-
-validation = train[:n/10]
-train = train[n/10+1:]
-
 
 model = Sequential([
     LinearLayer(2, 20, weights='random'),
@@ -106,10 +102,10 @@ trainer = Trainer(show_training = True, show_function = display.show)
 
 t = time.time()
 
-J_train_list, dJdy_list, J_validation_list = trainer.learn(
+J_train_list, dJdy_list, J_test_list = trainer.learn(
     model = model,
     train = train,
-    validation = validation,
+    test= test,
     loss = NegativeLogLikelihoodLoss(),
     # loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),

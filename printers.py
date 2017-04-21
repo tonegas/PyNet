@@ -8,7 +8,7 @@ class ShowTraining():
         self.ax = self.fig1.add_subplot(111)
         self.ax.set_title('Errors History (J)')
         self.train, = self.ax.plot(xrange(len([])), [], color='green', marker='^', label='Training')
-        self.validation, = self.ax.plot(xrange(len([])), [], color='blue', marker='s', label='Validation')
+        self.test, = self.ax.plot(xrange(len([])), [], color='blue', marker='s', label='Test')
         self.ax.set_xlabel('Epochs')
         self.ax.set_ylabel(r'$||J||_2/N$')
         self.ax.legend()
@@ -24,13 +24,13 @@ class ShowTraining():
         if epochs_num is not None:
             self.ax2.set_xlim([0,epochs_num])
 
-    def show(self, epoch, J_train_list, dJdy_list = None, J_validation_list = None):
+    def show(self, epoch, J_train_list, dJdy_list = None, J_test_list = None):
         self.train.set_xdata(xrange(len(J_train_list[:epoch+1])))
         self.train.set_ydata(J_train_list[:epoch+1])
-        if J_validation_list is not None:
-            self.validation.set_xdata(xrange(len(J_validation_list[:epoch+1])))
-            self.validation.set_ydata(J_validation_list[:epoch+1])
-            self.ax.set_ylim([0,max(max(J_train_list)+max(J_train_list)*0.1,max(J_validation_list)+max(J_validation_list)*0.1)])
+        if J_test_list is not None:
+            self.test.set_xdata(xrange(len(J_test_list[:epoch+1])))
+            self.test.set_ydata(J_test_list[:epoch+1])
+            self.ax.set_ylim([0,max(max(J_train_list)+max(J_train_list)*0.1,max(J_test_list)+max(J_test_list)*0.1)])
         else:
             self.ax.set_ylim([0,max(J_train_list)+max(J_train_list)*0.1])
         self.fig1.canvas.draw()

@@ -1,11 +1,5 @@
 import numpy, os, struct
-
-def to_one_hot_vect(vect, num_classes):
-    on_hot_vect = []
-    for i,target in enumerate(vect):
-        on_hot_vect.append(numpy.zeros(num_classes))
-        on_hot_vect[i][target] = 1
-    return on_hot_vect
+from utils import to_one_hot_vect
 
 def load_mnist_dataset(dataset = "training", path = "."):
     if dataset is "training":
@@ -26,5 +20,5 @@ def load_mnist_dataset(dataset = "training", path = "."):
         magic, num, rows, cols = struct.unpack(">IIII", fimg.read(16))
         img = numpy.fromfile(fimg, dtype=numpy.uint8).reshape(len(lbl), rows*cols).astype(numpy.float)
 
-    return zip(img, numpy.array(to_one_hot_vect(lbl,10)))
+    return zip(img, numpy.array([to_one_hot_vect(v,10) for v in lbl]))
 

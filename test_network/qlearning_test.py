@@ -3,7 +3,7 @@ from reinforcement import Ace,Ase,Agent
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from layers import GenericLayer
-from classicnetwork import Kohonen
+from standart_network.kohonen import Kohonen
 
 time_end = 100000
 time_step = 0.01
@@ -19,12 +19,12 @@ time_step = 0.01
 #######################################
 
 #States with position of cart and ball
-ball_x = 5
-ball_y = 5
-ball_vx = 5
-cart_x = 6
-cart_vx = 6
-states_num = ball_x*ball_y*ball_vx*cart_x*cart_vx
+# ball_x = 5
+# ball_y = 5
+# ball_vx = 5
+# cart_x = 6
+# cart_vx = 6
+# states_num = ball_x*ball_y*ball_vx*cart_x*cart_vx
 # states_num = 600
 #######################################
 
@@ -35,11 +35,11 @@ states_num = ball_x*ball_y*ball_vx*cart_x*cart_vx
 #######################################
 
 #States with differential position only
-# states_num = 2#6.0
+states_num = 10.0
 #######################################
 
 
-load = 1
+load = 0
 interval = 1
 
 if load == 1:
@@ -49,12 +49,13 @@ if load == 1:
     # ase = GenericLayer.load('ase.net')
 else:
     kon = Kohonen(
-        6,
+        5,
         states_num,
-        (30,20,False),
-        2
+        (5,2,False),
+        2,
+        radius = 1
     )
-    agent = Agent(states_num, 3, policy='gaussian', learning_rate=0.8, gamma=0.99)
+    agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
     # ace = Ace(states_num,0.8)
     # ase = Ase(states_num,0.8)
 
@@ -96,7 +97,9 @@ class Ball():
             # self.lose = 1
             if self.p[0] < 0:
                 self.p[0] = 0
+                # self.p[0] = 4.9998
             if self.p[0] >= 4.9999:
+                # self.p[0] = 0
                 self.p[0] = 4.9998
 
         if self.p[1] < 0:
@@ -112,18 +115,20 @@ class Cart():
         self.v = np.array([0.0,0.0])
         self.p = np.array([int(np.random.rand(1)[0]*5.0),0.5])
         self.w = 1.0
+        self.lose = 0
 
     def step(self, dt, command_x, command_y = 0):
         self.a = np.array([command_x/self.m,command_y/self.m])
         self.v = self.v*0.9 + dt*self.a
         self.p = self.p + dt*self.v
         # self.p[0] = self.p[0] + command*5.0/cart_statas
-        # if self.p[0]-self.w/2 <= 0 or self.p[0]+self.w/2 >= 5:
-        #     self.v[0] = 0
-        #     if self.p[0]-self.w/2 <= 0:
-        #         self.p[0] = self.w/2
-        #     if self.p[0]+self.w/2 >= 5:
-        #         self.p[0] = 5-self.w/2
+        if self.p[0]<= 0 or self.p[0] >= 5:
+            self.lose = 1
+            self.v[0] = 0
+            if self.p[0] <= 0:
+                self.p[0] = 0
+            if self.p[0]+self.w/2 >= 5:
+                self.p[0] = 5
 
 def data_gen(t=0):
     cart = Cart()
@@ -134,30 +139,30 @@ def data_gen(t=0):
         ball.step(time_step, cart)
 
         # state = kon.forward(np.array([ball.p[0],ball.p[1],ball.v[0],ball.v[1],cart.p[0],cart.v[0]]),True)
-        stateballx = int(ball.p[0]/5.0*ball_x)
-        statebally = int(ball.p[1]/5.0*ball_y)
-        stateballvx = int(np.round(ball.v[0])+2)
-        if stateballvx <= 0:
-            stateballvx = 0
-        if stateballvx >= ball_vx-1:
-            stateballvx = ball_vx-1
-
-        valcartx = int((cart.p[0]+cart.w/2.0))
-        if valcartx <= 0:
-            statecartx = 0
-        elif valcartx >= 5:
-            statecartx = 5
-        else:
-            statecartx = valcartx
-
-        statecartlvx = int(np.round(cart.v[0])+2)
-        if statecartlvx <= 0:
-            statecartlvx = 0
-        if statecartlvx >= ball_vx-1:
-            statecartlvx = ball_vx-1
-
+        # stateballx = int(ball.p[0]/5.0*ball_x)
+        # statebally = int(ball.p[1]/5.0*ball_y)
+        # stateballvx = int(np.round(ball.v[0])+2)
+        # if stateballvx <= 0:
+        #     stateballvx = 0
+        # if stateballvx >= ball_vx-1:
+        #     stateballvx = ball_vx-1
+        #
+        # valcartx = int((cart.p[0]+cart.w/2.0))
+        # if valcartx <= 0:
+        #     statecartx = 0
+        # elif valcartx >= 5:
+        #     statecartx = 5
+        # else:
+        #     statecartx = valcartx
+        #
+        # statecartlvx = int(np.round(cart.v[0])+2)
+        # if statecartlvx <= 0:
+        #     statecartlvx = 0
+        # if statecartlvx >= ball_vx-1:
+        #     statecartlvx = ball_vx-1
+        #
         # print stateballx,statebally,stateballvx,statediff,statediff_vx
-        state = combine_states([stateballx,statebally,stateballvx,statecartx,statecartlvx],[ball_x,ball_y,ball_vx,cart_x,cart_vx])
+        # state = combine_states([stateballx,statebally,stateballvx,statecartx,statecartlvx],[ball_x,ball_y,ball_vx,cart_x,cart_vx])
         # # print state
 
         # States with position of cart and ball
@@ -197,10 +202,12 @@ def data_gen(t=0):
         #     # elif dist >= cart.w/4:
         #     #     state[2] = 1
         ##########################################
+        state = kon.forward([ball.p[0],ball.p[1],ball.v[0],cart.p[0],cart.v[0]])
+        print(state)
         if ball.lose == 0:
             if ball.catch:
-                # agent.reinforcement(state,100.0*catches)
-                agent.reinforcement(np.argmax(state),100.0*catches)
+                agent.reinforcement(state,100.0*catches)
+                # agent.reinforcement(np.argmax(state),100.0*catches)
                 catches += 1
                 # print 'catch'
 
@@ -211,8 +218,8 @@ def data_gen(t=0):
 
             # if ball.side == 1:
             #     agent.reinforcement(np.argmax(state),-25.0)
-            # ind_command = agent.reinforcement(state,0)
-            ind_command = agent.reinforcement(np.argmax(state),0)
+            ind_command = agent.reinforcement(state,0)
+            # ind_command = agent.reinforcement(np.argmax(state),0)
             command = 0
             if ind_command == 0:
                 command = -1
@@ -221,12 +228,16 @@ def data_gen(t=0):
             elif ind_command == 2:
                 command = 0
 
+            if cart.lose == 1:
+                cart.lose = 0
+                agent.reinforcement(state,-10.0)
+
             # agent.reinforcement(np.argmax(state),-np.abs(command)/10.0)
             cart.step(time_step, command)
         else:
             # print 'boing'
-            # agent.reinforcement(state,-50.0)
-            agent.reinforcement(np.argmax(state),-50.0)
+            agent.reinforcement(state,-50.0)
+            # agent.reinforcement(np.argmax(state),-50.0)
             catches = 0
             cart = Cart()
             ball = Ball()

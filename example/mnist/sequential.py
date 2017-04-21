@@ -56,13 +56,10 @@ else:
 
 trainer = Trainer(show_training = False)#, show_function = display.show)
 
-validation = train[0:10000]
-train = train[10000:]
-
-J_list, dJdy_list, J_validation = trainer.learn(
+J_list, dJdy_list, J_test = trainer.learn(
     model = model,
     train = train,
-    validation = validation,
+    test = test,
     # loss = NegativeLogLikelihoodLoss(),
     loss = CrossEntropyLoss(),
     # loss = SquaredLoss(),

@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 
 from standart_network.kohonen import Kohonen
 from printers import Printer2D
-from sklearn import datasets
+#from sklearn import datasets
 
 classes = ["o","v","x",".","s"]
 colors = ['r', 'g', 'b', 'y', 'o']
@@ -14,8 +14,7 @@ epochs = 30
 
 start_learning_rate = 0.15
 stop_learning_rate = 0.05
-total_iterations = 5
-start_radius = 3
+start_radius = 5
 stop_radius = 1
 
 
@@ -38,7 +37,7 @@ def data_gen(t=0):
             model.forward(data[0],True)
             yield (model.W,data[0])
         model.learning_rate = stop_learning_rate+(start_learning_rate-stop_learning_rate)*(epochs-epoch)/epochs
-        print model.learning_rate
+        # print model.learning_rate
         model.radius = stop_radius+(start_radius-stop_radius)*(epochs-epoch)/epochs
 
 fig, ax = plt.subplots()
