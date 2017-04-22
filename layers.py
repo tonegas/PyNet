@@ -164,7 +164,7 @@ class NormalizationLayer(GenericLayer):
         self.max_out = max_out
 
     def forward(self, x, update = False):
-        return (x/(self.max_in-self.min_in)-self.min_in)*(self.max_out-self.min_out)+self.min_out
+        return (x-self.min_in)/(self.max_in-self.min_in)*(self.max_out-self.min_out)+self.min_out
 
     def backward(self, dJdy, optimizer = None):
         return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)

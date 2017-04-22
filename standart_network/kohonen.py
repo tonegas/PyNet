@@ -2,12 +2,18 @@ import numpy as np
 from genericlayer import GenericLayer
 from utils import define_weights
 
+
 class Kohonen(GenericLayer):
-    def __init__(self, input_size, output_size, topology, output_type = 0, weights = 'random', learning_rate = 0.1, radius = 0.1):
+    def __init__(self, input_size, output_size, topology, output_type = 'btu', weights = 'random', learning_rate = 0.1, radius = 0.1):
         self.input_size = input_size
         self.output_size = output_size
         self.radius = radius
-        self.output_type = output_type
+        self.output_types = {
+            'btu': lambda: self.btu,
+            'distance': lambda: self.weight_distance,
+            'weight': lambda: self.selected_weight
+        }
+        self.output_type = self.output_types.get(output_type)
         if type(topology) == tuple:
             if (len(topology) == 2 and type(topology[0]) == int and type(topology[1]) == bool):
                 self.positions = [x for x in range(topology[0])]
@@ -24,6 +30,9 @@ class Kohonen(GenericLayer):
 
         self.learning_rate = learning_rate
         self.W = define_weights(weights, input_size, output_size)
+        self.btu = None
+        self.weight_distance = None
+        self.selected_weight = None
 
     def best_matching_unit(self, x):
         return np.argmin(np.sum((np.array(self.W)-x)**2,1))
@@ -38,24 +47,9 @@ class Kohonen(GenericLayer):
             return np.sqrt(np.sum((np.array(self.positions)-self.positions[best_matching_unit])**2,1))
 
     def forward(self, x, update = False):
+        self.btu = self.best_matching_unit(x)
+        self.weight_distance = self.distance(self.btu)
         if update:
-            best_matching_unit = self.best_matching_unit(x)
-            if self.output_type == 2:
-                return best_matching_unit
-
-            d = self.distance(best_matching_unit)
-            if self.output_type == 1:
-                return d
-
-            self.W += self.learning_rate*np.array([self.phi(d)]).T*(np.array([x]).repeat(self.output_size,0)-self.W)
-            return self.W[best_matching_unit,:]
-        else:
-            best_matching_unit = self.best_matching_unit(x)
-            if self.output_type == 2:
-                return best_matching_unit
-
-            d = self.distance(best_matching_unit)
-            if self.output_type == 1:
-                return d
-
-            return self.W[self.best_matching_unit(x),:]
+            self.W += self.learning_rate*np.array([self.phi(self.weight_distance)]).T*(np.array([x]).repeat(self.output_size,0)-self.W)
+        self.selected_weight = self.W[self.btu,:]
+        return self.output_type()

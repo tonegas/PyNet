@@ -60,28 +60,21 @@ class AseAce(GenericLayer):
 
 
 class Agent(GenericLayer):
-    #ora faccio l'assunsione di avere un numero di azioni uguale in ogni stato
-    def __init__(self, state_size, action_size, learning_rate = 0.1, gamma = 0.95, policy = 'esp-greedy', epsilon = 0.3):
+    def __init__(self, state_size, action_size, learning_rate = 0.1, gamma = 0.95, policy = 'esp-greedy', epsilon = 0.3, sigma = 1):
         self.Q = define_weights('zeros', state_size, action_size)
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.gamma = gamma
-        # self.sigma = sigma
+        self.sigma = sigma
         self.y = 0
         self.x = 0
-        if type(policy) == str:
-            if policy == 'greedy':
-                self.policy = 0
-            elif policy == 'esp-greedy':
-                self.policy = 1
-            elif policy == 'softmax':
-                self.policy = 2
-            elif policy == 'gaussian':
-                self.policy = 3
-            else:
-                raise Exception('Type not correct!')
-        else:
-            raise Exception('Type not correct!')
+        self.policies = {
+            'greedy' : self.greedy,
+            'esp-greedy' : self.eps_greedy,
+            'gaussian' : self.gaussian,
+            'softmax' : self.softmax
+        }
+        self.policy = self.policies.get(policy)
 
     def greedy(self, x):
         self.x = x
@@ -98,23 +91,16 @@ class Agent(GenericLayer):
 
     def gaussian(self, x):
         self.x = x
-        self.y = np.argmax(self.Q[:,x]+np.random.normal(0,1,size=self.Q[:,x].size))
+        self.y = np.argmax(self.Q[:,x]+np.random.normal(0,self.sigma,size=self.Q[:,x].size))
         return self.y
 
     def softmax(self, x):
         raise Exception('Not Implemented!')
 
     def forward(self, x, update = False):
-        if self.policy == 0:
-            return self.greedy(x)
-        elif self.policy == 1:
-            return self.eps_greedy(x)
-        elif self.policy == 2:
-            return self.softmax(x)
-        else:
-            return self.gaussian(x)
+        return self.policy(x)
 
     def reinforcement(self, x, r):
         self.Q[self.y,self.x] += self.learning_rate*(r+self.gamma*np.max(self.Q[:,x])-self.Q[self.y,self.x])
-        return self.forward(x)
+        return self.policy(x)
 

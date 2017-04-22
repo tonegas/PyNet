@@ -100,15 +100,3 @@ class Trainer():
         if test:
             return J_train_list, dJdy_list, J_test_list
         return J_train_list, dJdy_list
-
-class QLearningTrainer():
-    def __init__(self, show_training = False, show_function = None):
-        self.show_training = show_training
-        self.show_function = show_function
-
-    def learn_one(self, model, x, t, loss, optimizer):
-        y = model.forward(x, True)
-        J = loss.loss(y,t)
-        dJdy = loss.dJdy_gradient(y,t)
-        model.backward(dJdy, optimizer)
-        return J, dJdy

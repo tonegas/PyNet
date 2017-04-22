@@ -16,7 +16,7 @@ def define_weights(weights, input_size, output_size):
     if type(weights) == str:
         if weights == 'random':
             weights_val = np.random.rand(output_size, input_size)
-        elif weights == 'norm_random':
+        elif weights == 'norm-random':
             weights_val = (np.random.rand(output_size, input_size)-0.5)/input_size
         elif weights == 'gaussian':
             weights_val = np.random.randn(output_size, input_size)/input_size

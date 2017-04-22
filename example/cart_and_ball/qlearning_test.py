@@ -1,9 +1,11 @@
 import numpy as np
-from reinforcement import Ace,Ase,Agent
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from layers import GenericLayer
+
+from cart_and_ball_dyn import Cart, Ball
+from reinforcement import Ace,Ase,Agent
 from standart_network.kohonen import Kohonen
+from layers import GenericLayer
 
 time_end = 100000
 time_step = 0.01
@@ -49,11 +51,11 @@ if load == 1:
     # ase = GenericLayer.load('ase.net')
 else:
     kon = Kohonen(
-        5,
+        2,
         states_num,
         (5,2,False),
-        2,
-        radius = 1
+        'btu',
+        radius = 2
     )
     agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
     # ace = Ace(states_num,0.8)
@@ -69,66 +71,6 @@ def combine_states(state_list, state_dim):
     tot_state = np.zeros(np.prod(state_dim))
     tot_state[val] = 1
     return tot_state
-
-class Ball():
-    def __init__(self):
-        self.a = np.array([0,-9.81])
-        self.v = np.array([np.random.rand(1)[0]*4.0-2.0,np.random.rand(1)[0]])
-        self.p = np.array([np.random.rand(1)[0]*3+1,4.0])
-        self.lose = 0
-        self.catch = 0
-        self.side = 0
-
-    def step(self, dt, cart):
-        self.catch = 0
-        self.lose = 0
-        self.side = 0
-        self.v = self.v + dt*self.a
-        self.p = self.p + dt*self.v
-        if self.p[0] > cart.p[0]-cart.w/2 and self.p[0] < cart.p[0]+cart.w/2 and self.p[1] < cart.p[1]:
-            self.v[1] = -self.v[1]
-            self.v[0] += cart.v[0]*0.1
-            self.catch = 1
-            self.p[1] = cart.p[1]+0.1
-
-        if self.p[0] < 0 or self.p[0] >= 4.9999:
-            self.v[0] = -self.v[0]
-            self.side = 1
-            # self.lose = 1
-            if self.p[0] < 0:
-                self.p[0] = 0
-                # self.p[0] = 4.9998
-            if self.p[0] >= 4.9999:
-                # self.p[0] = 0
-                self.p[0] = 4.9998
-
-        if self.p[1] < 0:
-            self.lose = 1
-
-        if  self.p[1] >= 4.9999:
-            self.p[1] = 4.9998
-
-class Cart():
-    def __init__(self):
-        self.m = 0.005
-        self.a = np.array([0,0])
-        self.v = np.array([0.0,0.0])
-        self.p = np.array([int(np.random.rand(1)[0]*5.0),0.5])
-        self.w = 1.0
-        self.lose = 0
-
-    def step(self, dt, command_x, command_y = 0):
-        self.a = np.array([command_x/self.m,command_y/self.m])
-        self.v = self.v*0.9 + dt*self.a
-        self.p = self.p + dt*self.v
-        # self.p[0] = self.p[0] + command*5.0/cart_statas
-        if self.p[0]<= 0 or self.p[0] >= 5:
-            self.lose = 1
-            self.v[0] = 0
-            if self.p[0] <= 0:
-                self.p[0] = 0
-            if self.p[0]+self.w/2 >= 5:
-                self.p[0] = 5
 
 def data_gen(t=0):
     cart = Cart()
@@ -202,7 +144,7 @@ def data_gen(t=0):
         #     # elif dist >= cart.w/4:
         #     #     state[2] = 1
         ##########################################
-        state = kon.forward([ball.p[0],ball.p[1],ball.v[0],cart.p[0],cart.v[0]])
+        state = kon.forward([ball.p[0],cart.p[0]])
         print(state)
         if ball.lose == 0:
             if ball.catch:

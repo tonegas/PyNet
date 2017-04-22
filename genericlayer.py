@@ -1,4 +1,5 @@
-import inspect, pickle, os
+import inspect, os
+import dill as pickle
 import numpy as np
 
 

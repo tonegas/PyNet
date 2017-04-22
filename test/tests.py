@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-from layers import LinearLayer, ReluLayer, SigmoidLayer, SoftMaxLayer
+from layers import LinearLayer, ReluLayer, SigmoidLayer, SoftMaxLayer, NormalizationLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
 from network import Sequential
 
@@ -71,6 +71,20 @@ class ReluLayerTests(unittest.TestCase):
         l.forward(x)
         delta = l.backward([1,1])
         assert_almost_equal(np.diag(gradient),delta,decimal=5)
+
+class NormalizationLayerTests(unittest.TestCase):
+    def test_forward_backward(self):
+        l = NormalizationLayer(np.array([0.0,0.0,-5.0,-2.0]),np.array([5.0,5.0,5.0,2.0]),np.array([-1.0,-1.0,-1.0,-1.0]),np.array([1.0,1.0,1.0,1.0]))
+        y = l.forward(np.array([5.0,4.0,-5.0,-1.0]))
+        self.assertEqual(y.shape,(4,))
+        assert_almost_equal(y,np.array([1.0,0.6,-1.0,-0.5]))
+        x = np.random.rand(4)
+        gradient = l.numeric_gradient(x)
+        l.forward(x)
+        d = l.backward([1,1,1,1])
+        self.assertEqual(d.shape,(4,))
+        assert_almost_equal(np.diag(gradient),d,decimal=5)
+        return
 
 
 class SigmoidLayerTests(unittest.TestCase):
