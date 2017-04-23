@@ -169,6 +169,19 @@ class NormalizationLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         return dJdy*(self.max_out-self.min_out)/(self.max_in-self.min_in)
 
+class RandomGaussianLayer(GenericLayer):
+    def __init__(self, sigma = 1):
+        self.sigma = sigma
+
+    def forward(self, x, update = False):
+        if update == True:
+            self.y = x + np.random.normal(0,self.sigma,size=x.size)
+        else:
+            self.y = x
+        return self.y
+
+    def backward(self, dJdy, optimizer = None):
+        return dJdy
 
 #############################################################################################
 ############################### Layer for Computational Graph ###############################

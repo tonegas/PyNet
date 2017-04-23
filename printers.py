@@ -58,13 +58,15 @@ class Printer2D():
         plt.set_cmap(plt.cm.Paired)
         plt.pcolormesh(X, Y, Z)
 
-    def print_model(self, figure_ind, model, x_list):
+    def print_model(self, figure_ind, model, x_list, print_layers = None):
         max = np.max(x_list,0)
         min = np.min(x_list,0)
         x_range = np.linspace(min[0],max[0],100)
         y_range = np.linspace(min[1],max[1],100)
         X, Y = np.meshgrid(x_range, y_range)
-        for ind,layer in enumerate(model.elements):
+        if print_layers == None:
+            print_layers = range(len(model.elements))
+        for ind in print_layers:
             plt.figure(figure_ind+ind)
             z_vett = []
             for x_ind in xrange(X.shape[0]):

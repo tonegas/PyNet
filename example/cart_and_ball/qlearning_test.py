@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from cart_and_ball_dyn import Cart, Ball
-from reinforcement import Ace,Ase,Agent
+from qlearning import AseAce,Ase,Agent
 from standart_network.kohonen import Kohonen
 from layers import GenericLayer
 
@@ -31,13 +31,13 @@ time_step = 0.01
 #######################################
 
 #States with position of cart and ball
-# ball_states = 5
-# cart_statas = 6
-# states_num = cart_statas*ball_states
+ball_states = 5
+cart_statas = 6
+states_num = cart_statas*ball_states
 #######################################
 
 #States with differential position only
-states_num = 10.0
+# states_num = 2
 #######################################
 
 
@@ -45,21 +45,20 @@ load = 0
 interval = 1
 
 if load == 1:
-    kon = GenericLayer.load('kon.net')
-    agent = GenericLayer.load('agent.net')
-    # ace = GenericLayer.load('ace.net')
-    # ase = GenericLayer.load('ase.net')
+    # kon = GenericLayer.load('kon.net')
+    # agent = GenericLayer.load('agent.net')
+    agent = GenericLayer.load('ase.net')
 else:
-    kon = Kohonen(
-        2,
-        states_num,
-        (5,2,False),
-        'btu',
-        radius = 2
-    )
-    agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
-    # ace = Ace(states_num,0.8)
-    # ase = Ase(states_num,0.8)
+    # kon = Kohonen(
+    #     2,
+    #     states_num,
+    #     (5,2,False),
+    #     'distance',
+    #     radius = 2
+    # )
+    # agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
+    # agent = Ase(states_num,0.8)
+    agent = AseAce(states_num,0.8)
 
 def combine_states(state_list, state_dim):
     val = 0
@@ -108,16 +107,16 @@ def data_gen(t=0):
         # # print state
 
         # States with position of cart and ball
-        # stateball = int(ball.p[0]/5.0*ball_states)
-        # valcart = int((cart.p[0]+cart.w/2.0))
-        # if valcart <= 0:
-        #     statecart = 0
-        # elif valcart >= 5:
-        #     statecart = 5
-        # else:
-        #     statecart = valcart
-        # # print statecart
-        # state = combine_states([stateball,statecart],[ball_states,cart_statas])
+        stateball = int(ball.p[0]/5.0*ball_states)
+        valcart = int((cart.p[0]+cart.w/2.0))
+        if valcart <= 0:
+            statecart = 0
+        elif valcart >= 5:
+            statecart = 5
+        else:
+            statecart = valcart
+        # print statecart
+        state = combine_states([stateball,statecart],[ball_states,cart_statas])
         #########################################
 
         #States with differential position only
@@ -144,12 +143,14 @@ def data_gen(t=0):
         #     # elif dist >= cart.w/4:
         #     #     state[2] = 1
         ##########################################
-        state = kon.forward([ball.p[0],cart.p[0]])
-        print(state)
+        # state = kon.forward([ball.p[0],cart.p[0]])
+        # print(state)
         if ball.lose == 0:
             if ball.catch:
+                # agent.reinforcement(state,100.0*catches)
+
                 agent.reinforcement(state,100.0*catches)
-                # agent.reinforcement(np.argmax(state),100.0*catches)
+
                 catches += 1
                 # print 'catch'
 
@@ -159,9 +160,10 @@ def data_gen(t=0):
                     catches = 0
 
             # if ball.side == 1:
-            #     agent.reinforcement(np.argmax(state),-25.0)
-            ind_command = agent.reinforcement(state,0)
-            # ind_command = agent.reinforcement(np.argmax(state),0)
+            #     agent.reinforcement(state,-25.0)
+
+            ind_command = np.argmax(agent.reinforcement(state,0))
+            #print agent.reinforcement(state,0)
             command = 0
             if ind_command == 0:
                 command = -1
@@ -170,16 +172,16 @@ def data_gen(t=0):
             elif ind_command == 2:
                 command = 0
 
-            if cart.lose == 1:
-                cart.lose = 0
-                agent.reinforcement(state,-10.0)
+            # if cart.lose == 1:
+            #     cart.lose = 0
+            #     agent.reinforcement(state,-10.0)
 
             # agent.reinforcement(np.argmax(state),-np.abs(command)/10.0)
             cart.step(time_step, command)
         else:
             # print 'boing'
             agent.reinforcement(state,-50.0)
-            # agent.reinforcement(np.argmax(state),-50.0)
+
             catches = 0
             cart = Cart()
             ball = Ball()
@@ -197,13 +199,13 @@ def data_gen(t=0):
             # States with differential position only
             # print (ace.W,ase.W)
             # print agent.Q[agent.Q>0]
-            # print agent.Q
+            print agent.ase.W
             # print agent.Q[agent.Q>1].size/float(states_num*2)*100
             #########################################
 
             # ase.save('ase.net')
             # ace.save('ace.net')
-            kon.save('kon.net')
+            # kon.save('kon.net')
             agent.save('agent.net')
         yield (cart,ball)
 
