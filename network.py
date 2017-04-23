@@ -2,15 +2,6 @@ import numpy as np
 from itertools import izip
 from genericlayer import GenericLayer, WithElements
 
-class Lock(GenericLayer):
-    def __init__(self, net):
-        self.net = net
-
-    def forward(self, x, update = False):
-        return self.net.forward(x)
-
-    def backward(self, dJdy, optimizer = None):
-        return self.net.backward(dJdy)
 
 class Sequential(GenericLayer, WithElements):
     def __init__(self, *args):

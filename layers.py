@@ -74,6 +74,16 @@ class VWeightLayer(GenericLayer):
     def dJdW_gradient(self, dJdy):
         return dJdy + self.L1 * np.sign(self.W) + self.L2 * self.W
 
+class Lock(GenericLayer):
+    def __init__(self, net):
+        self.net = net
+
+    def forward(self, x, update = False):
+        return self.net.forward(x)
+
+    def backward(self, dJdy, optimizer = None):
+        return self.net.backward(dJdy)
+
 class SoftMaxLayer(GenericLayer):
     def forward(self, x, update = False):
         # print 'xS'+str(x)

@@ -67,23 +67,18 @@ class MWeight(Op):
         )
         return o
 
-class MWeightBias(Op):
-    def __init__(self, *args, **kwargs):
-        self.a = args
-        self.b = kwargs
-        super(MWeightBias,self).__init__(layers.LinearLayer(*args, **kwargs))
-
-    def __mul__(self, other):
-        o = MWeight(*self.a, **self.b)
-        o.net = Sequential(
-            other.get(),
-            self.get()
-        )
-        return o
-
 class Input(Op):
     def __init__(self, dict_variables, variable):
         super(Input,self).__init__(layers.SelectVariableLayer(dict_variables, variable))
+
+class Sigmoid(Op):
+    def __init__(self, operation):
+        super(Sigmoid,self).__init__(
+            Sequential(
+                operation.get(),
+                layers.SigmoidLayer
+            )
+        )
 
 class Sigmoid(Op):
     def __init__(self, operation):
