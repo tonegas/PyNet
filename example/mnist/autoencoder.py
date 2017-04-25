@@ -6,22 +6,21 @@ from network import Sequential
 from genericlayer import StoreNetwork
 from trainer import Trainer
 from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss, SquaredLoss, to_one_hot_vect
-from optimizers import GradientDescent, GradientDescentMomentum, AdaGrad
+from optimizers import GradientDescent, GradientDescentMomentum
 from printers import ShowTraining
 
+
 from standart_network.autoencoder import AutoEncoder
+
 
 num_classes = 10
 name_net = "mnist.net"
 load_net = False
-epochs = 10
+epochs = 200
 
 
 train = load_mnist_dataset(dataset = "training", path = "./mnist")
 test = load_mnist_dataset(dataset = "testing", path = "./mnist")
-
-train = [(t,t) for (t,v) in train]
-test = [(t,t) for (t,v) in test]
 
 
 if load_net:
@@ -29,33 +28,36 @@ if load_net:
     model = StoreNetwork.load(name_net)
 else:
     print "New Network"
-    ae = AutoEncoder(784,[
-        {'size' : 32, 'output_layer' : ReluLayer},
-        {'size' : 784, 'output_layer' : SigmoidLayer},
+    #Two layer network
+    ae = AutoEncoder(784, [
+        {"size" : 32, "output_layer" :TanhLayer},
+        {"size" : 784, "output_layer" :TanhLayer}
     ])
-    ae.choose_network()
-    model = Sequential(
+    model = Sequential([
         NormalizationLayer(0,255,-0.1,0.1),
         ae,
-        NormalizationLayer(0,1,0,255),
-    )
+        NormalizationLayer(-1,1,0,255),
+    ])
+
+train = []
+ax.imshow(img.reshape(28,28), cmap=plt.get_cmap('Greys'))
 
 display = ShowTraining(epochs_num = epochs)
 
-trainer = Trainer(show_training = True, show_function = display.show)
+trainer = Trainer(show_training = False, show_function = display.show)
 
 J_list, dJdy_list, J_test = trainer.learn(
     model = model,
     train = train,
-    test = test,
     # loss = NegativeLogLikelihoodLoss(),
-    # loss = CrossEntropyLoss(),
-    loss = SquaredLoss(),
+    loss = CrossEntropyLoss(),
+    # loss = SquaredLoss(),
     # optimizer = GradientDescent(learning_rate=0.3),
-    optimizer = AdaGrad(learning_rate=0.7),
+    optimizer = GradientDescentMomentum(learning_rate=0.35/10, momentum=0.5),
     epochs = epochs,
-    batch_size = 256
+    batch_size = 10
 )
+
 
 
 raw_input('Press ENTER to exit')

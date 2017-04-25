@@ -54,14 +54,14 @@ class AutoEncoder(genericlayer.GenericLayer):
     def backward(self, dJdy, optimizer = None):
         return self.model.backward(dJdy, optimizer)
 
-ae = AutoEncoder(10,[
-    {'size' : 7, 'output_layer' : layers.SigmoidLayer},
-    {'size' : 5, 'output_layer' : layers.SigmoidLayer},
-    {'size' : 3, 'output_layer' : layers.SigmoidLayer},
-    {'size' : 5, 'output_layer' : layers.SigmoidLayer},
-    {'size' : 7, 'output_layer' : layers.SigmoidLayer},
-    {'size' : 10, 'output_layer' : layers.SigmoidLayer},
-])
-ae.choose_network()
-print ae.forward(np.array([1,2,3,4,5,6,7,8,9,10]))
-print ae.backward(np.array([1,2,3,4,5,6,7,8,9,10]))
+# ae = AutoEncoder(10,[
+#     {'size' : 7, 'output_layer' : layers.SigmoidLayer},
+#     {'size' : 5, 'output_layer' : layers.SigmoidLayer},
+#     {'size' : 3, 'output_layer' : layers.SigmoidLayer},
+#     {'size' : 5, 'output_layer' : layers.SigmoidLayer},
+#     {'size' : 7, 'output_layer' : layers.SigmoidLayer},
+#     {'size' : 10, 'output_layer' : layers.SigmoidLayer},
+# ])
+# ae.choose_network()
+# print ae.forward(np.array([1,2,3,4,5,6,7,8,9,10]))
+# print ae.backward(np.array([1,2,3,4,5,6,7,8,9,10]))
