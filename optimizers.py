@@ -17,7 +17,7 @@ class GradientDescent(Optimizer):
             layer.dW += dJdW
         else:
             layer.W -= self.learning_rate * (layer.dW + dJdW)
-            layer.dW = 0
+            layer.dW.fill(0.0)
 
 class GradientDescentMomentum(Optimizer):
     def __init__(self, learning_rate, momentum):
@@ -34,7 +34,7 @@ class GradientDescentMomentum(Optimizer):
             layer.dW += layer.velocity
         else:
             layer.W += (layer.dW + layer.velocity)
-            layer.dW = 0
+            layer.dW.fill(0.0)
 
 class AdaGrad(Optimizer):
     def __init__(self, learning_rate):
@@ -52,7 +52,7 @@ class AdaGrad(Optimizer):
             layer.dW -= np.multiply(variation,dJdW)
         else:
             layer.W += layer.dW - np.multiply(variation,dJdW)
-            layer.dW = 0
+            layer.dW.fill(0.0)
 
 class RmsProp():
     pass

@@ -40,7 +40,7 @@ from qlearning import GenericAgent
 from network import Sequential
 from layers import SoftMaxLayer, LinearLayer, TanhLayer, NormalizationLayer, RandomGaussianLayer
 
-interval = 1
+interval = 0
 load = 1
 
 if load == 1:
@@ -50,18 +50,18 @@ if load == 1:
     # p.print_model(2,agent.net,np.array([[0,0],[5.0,5.0]]))
     # plt.show()
 else:
-    # norm = NormalizationLayer(
-    #     np.array([0.0,0.0,0.0,-3.0,-3.0]),
-    #     np.array([5.0,5.0,5.0,3.0,3.0]),
-    #     np.array([-1.0,-1.0,-1.0,-1.0,-1.0]),
-    #     np.array([1.0,1.0,1.0,1.0,1.0])
-    # )
     norm = NormalizationLayer(
-        np.array([0.0,0.0,0.0,-3.0]),
-        np.array([5.0,5.0,5.0,3.0]),
-        np.array([-1.0,-1.0,-1.0,-1.0]),
-        np.array([1.0,1.0,1.0,1.0])
+        np.array([0.0,0.0,0.0,-3.0,-3.0]),
+        np.array([5.0,5.0,5.0,3.0,3.0]),
+        np.array([-1.0,-1.0,-1.0,-1.0,-1.0]),
+        np.array([1.0,1.0,1.0,1.0,1.0])
     )
+    # norm = NormalizationLayer(
+    #     np.array([0.0,0.0,0.0,-3.0]),
+    #     np.array([5.0,5.0,5.0,3.0]),
+    #     np.array([-1.0,-1.0,-1.0,-1.0]),
+    #     np.array([1.0,1.0,1.0,1.0])
+    # )
     # norm = NormalizationLayer(
     #     np.array([0.0,0.0]),
     #     np.array([5.0,5.0]),
@@ -71,11 +71,11 @@ else:
 
     n = Sequential(
         norm,
-        LinearLayer(4,3,weights='gaussian'),
+        LinearLayer(5,3,weights='gaussian'),
         TanhLayer,
         # #AddGaussian(1),
-        LinearLayer(3,3,weights='gaussian'),
-        RandomGaussianLayer(1),
+        # LinearLayer(3,3,weights='gaussian'),
+        RandomGaussianLayer(10),
         SoftMaxLayer
     )
     agent = GenericAgent(n,3,20,5.0)
@@ -93,7 +93,7 @@ def data_gen(t=0):
         # print time
         ball.step(time_step, cart)
 
-        state = np.array([ball.p[0],cart.p[0],ball.p[1],ball.v[0]])
+        state = np.array([ball.p[0],cart.p[0],ball.p[1],ball.v[0],cart.v[0]])
         #print state
         if ball.lose == 0:
             if ball.catch:
@@ -113,9 +113,9 @@ def data_gen(t=0):
             #print ind_command
             command = 0
             if ind_command == 0:
-                command = 1
+                command = 0.5
             elif ind_command == 1:
-                command = -1
+                command = -0.5
             elif ind_command == 2:
                 command = 0
 

@@ -10,8 +10,8 @@ class LinearLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.dW = 0
         self.W = define_weights(weights, input_size + 1, output_size)
+        self.dW = np.zeros_like(self.W)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
@@ -33,8 +33,8 @@ class MWeightLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.dW = 0
         self.W = define_weights(weights, input_size, output_size)
+        self.dW = np.zeros_like(self.W)
 
     def forward(self, x, update = False):
         self.x = x
@@ -55,8 +55,8 @@ class VWeightLayer(GenericLayer):
         self.L1 = L1
         self.L2 = L2
         self.size = size
-        self.dW = 0
         self.W = define_weights(weights, 1, size)
+        self.dW = np.zeros_like(self.W)
 
     def forward(self, x, update = False):
         self.x = x
@@ -122,6 +122,7 @@ class TanhLayer(GenericLayer):
         return self.y
 
     def backward(self, dJdy, optimizer = None):
+        print 'tanh'+str(self.y)
         return (1.-self.y ** 2) * dJdy
 
 class SigmoidLayer(GenericLayer):
