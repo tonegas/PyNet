@@ -15,6 +15,9 @@ print 'data has %d characters, %d unique.' % (data_size, vocab_size)
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
 
+hidden_size = 100
+window_size = 25
+
 # v = GenericLayer.load_or_create(
 #     'vanilla.net',
 #     Vanilla(
@@ -22,8 +25,20 @@ ix_to_char = { i:ch for i,ch in enumerate(chars) }
 #     )
 # )
 
+Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
+Whh = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden
+Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
+bh = np.zeros((hidden_size, 1)) # hidden bias
+by = np.zeros((vocab_size, 1)) # output bias
+
+
 v = Vanilla(
-        vocab_size,vocab_size,5,5
+      vocab_size,vocab_size,hidden_size,window_size,
+      Wxh = Wxh.copy(),
+      Whh = Whh.copy(),
+      Why = Why.copy(),
+      bh = bh.copy(),
+      by = by.copy()
     )
 # sm = SoftMaxLayer()
 
@@ -32,7 +47,7 @@ v = Vanilla(
 # print v.forward(x)
 # print v.backward(x)
 
-epochs = 5
+epochs = 50
 
 display = ShowTraining(epochs)
 
@@ -42,14 +57,14 @@ train = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[0:-1]]
 target = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[1:]]
 
 
-J, dJdy = trainer.learn_window(
-    v,
-    zip(train[:5],target[:5]),
-    #NegativeLogLikelihoodLoss(),
-    CrossEntropyLoss(),
-    AdaGrad(learning_rate=0.001),
-)
-print J
+# J, dJdy = trainer.learn_window(
+#     v,
+#     zip(train[:5],target[:5]),
+#     NegativeLogLikelihoodLoss(),
+#     #CrossEntropyLoss(),
+#     AdaGrad(learning_rate=1e-1),
+# )
+# print J
 
 # J, dJdy = trainer.learn_window(
 #     v,

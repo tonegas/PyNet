@@ -23,17 +23,17 @@ class Trainer():
             # print model.forward(x, True)
             y = model.forward(x, True)
             y_list.append(y)
-            print 'x'+str(x)
-            print 'y'+str(y)
-            print 't'+str(t)
+            # print 'x'+str(x)
+            # print 'y'+str(y)
+            # print 't'+str(t)
             J = loss.loss(y,t)
             J_train_list += np.linalg.norm(J)/this_batch_size
 
-        print '------------------------------------------'
+        # print '------------------------------------------'
         for i,(x,t) in enumerate(reversed(batch)):
-            print 'x'+str(x)
-            print 'y'+str(y_list[this_batch_size-1-i])
-            print 't'+str(t)
+            # print 'x'+str(x)
+            # print 'y'+str(y_list[this_batch_size-1-i])
+            # print 't'+str(t)
             dJdy = loss.dJdy_gradient(y_list[this_batch_size-1-i],t)
 
             if this_batch_size == i+1:

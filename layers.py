@@ -28,13 +28,16 @@ class LinearLayer(GenericLayer):
         return dJdW
 
 class MWeightLayer(GenericLayer):
-    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0, dweights=None):
         self.L1 = L1
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
         self.W = define_weights(weights, input_size, output_size)
-        self.dW = np.zeros_like(self.W)
+        if dweights is None:
+           self.dW = np.zeros_like(self.W)
+        else:
+            self.dW = dweights
 
     def forward(self, x, update = False):
         self.x = x
@@ -122,7 +125,7 @@ class TanhLayer(GenericLayer):
         return self.y
 
     def backward(self, dJdy, optimizer = None):
-        print 'tanh'+str(self.y)
+        # print 'tanh'+str(self.y)
         return (1.-self.y ** 2) * dJdy
 
 class SigmoidLayer(GenericLayer):
