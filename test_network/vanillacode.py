@@ -5,9 +5,10 @@ BSD License
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
+from layers import SoftMaxLayer
 from standart_network.vanilla import Vanilla
-from losses import NegativeLogLikelihoodLoss
-from optimizers import GradientDescent
+from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss
+from optimizers import GradientDescent, AdaGrad
 
 # data I/O
 from utils import to_one_hot_vect
@@ -43,8 +44,9 @@ van = Vanilla(
   by = by.copy()
 )
 negLog = NegativeLogLikelihoodLoss()
-opt = GradientDescent(learning_rate=0.1)
-opt.store = True
+# cross = CrossEntropyLoss()
+opt = AdaGrad(learning_rate=learning_rate)
+soft = SoftMaxLayer()
 
 def lossFun(inputs, targets, hprev):
   """
@@ -62,11 +64,27 @@ def lossFun(inputs, targets, hprev):
     xs[t][inputs[t]] = 1
     hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh) # hidden state
     ys[t] = np.dot(Why, hs[t]) + by # unnormalized log probabilities for next chars
-    ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t])) # probabilities for next chars
+    ps[t] = np.exp(ys[t]-np.max(ys[t])) / np.sum(np.exp(ys[t]-np.max(ys[t]))) # probabilities for next chars
     loss += -np.log(ps[t][targets[t],0]) # softmax (cross-entropy loss)
 
+    # assert_array_equal(van.window_step,t)
+    # assert_array_almost_equal(van.state[t-1],hs[t-1].T[0])
     # assert_array_almost_equal(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]]),hs[t].T[0])
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W,Wxh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W,Whh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[2].W,bh.T[0])
+    #
+    # #Neg
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,by.T[0])
+    # assert_array_almost_equal(van.outputnet[t].forward(hs[t].T[0]),ps[t].T[0])
+    # assert_array_almost_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]])),ps[t].T[0])
     # assert_array_almost_equal(van.forward(xs[t].T[0]),ps[t].T[0])
+    #
+    # #Cross
+    # # assert_array_almost_equal(soft.forward(van.forward(xs[t].T[0])),ps[t].T[0])
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,Why)
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[1].W,by.T[0])bh.T[0])
 
   # backward pass: compute gradients going backwards
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
@@ -82,15 +100,38 @@ def lossFun(inputs, targets, hprev):
     dbh += dhraw
     dWxh += np.dot(dhraw, xs[t].T)
     dWhh += np.dot(dhraw, hs[t-1].T)
-    dhnext = np.dot(Whh.T, dhraw)
 
     # van.backward(negLog.dJdy_gradient(ps[t].T[0],to_one_hot_vect(targets[t],vocab_size)),opt)
-    #print van.outputnet[t].net.elements[0].elements[0].elements[1].x
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].x,hs[t].T[0])
-  for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
-    np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].x,hs[t].T[0])
+    #
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[0].elements[1].dW,dWxh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[1].elements[1].dW,dWhh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[2].dW,dbh.T[0])
+    #
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W,Wxh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W,Whh)
+    # assert_array_almost_equal(van.statenet[t].net.elements[0].elements[2].W,bh.T[0])
+    #
+    # #Neg
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].dW,dWhy)
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].dW,dby.T[0])
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
+    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,by.T[0])
+    #
+    # #Cross
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].dW,dWhy)
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[1].dW,dby.T[0])
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,Why)
+    # # assert_array_almost_equal(van.outputnet[t].net.elements[1].W,by.T[0])bh.T[0])
+    #
+    # assert_array_almost_equal(van.dJdh[t],dhnext.T[0])
 
-  # exit(0)
+    dhnext = np.dot(Whh.T, dhraw)
+
+  # opt.update_model()
+  # for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
+  #   np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
+
   return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
 
 def sample(h, seed_ix, n):
@@ -131,6 +172,7 @@ while True:
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
+
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
   if n % 100 == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
 

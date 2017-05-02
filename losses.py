@@ -1,12 +1,6 @@
 import numpy as np
 from genericlayer import GenericLayer
 
-def to_one_hot_vect(vect, num_classes):
-    on_hot_vect = []
-    for i,target in enumerate(vect):
-        on_hot_vect.append(np.zeros(num_classes))
-        on_hot_vect[i][target] = 1
-    return on_hot_vect
 
 class SquaredLoss(GenericLayer):
     def forward(self, x, update = False):
@@ -29,7 +23,7 @@ class NegativeLogLikelihoodLoss(GenericLayer):
         # return -t*np.log(y)
 
     def dJdy_gradient(self, y, t):
-        return -t/(np.maximum(y,0.000001))
+        return -t/(np.maximum(y,0.0000001))
 
 class CrossEntropyLoss(GenericLayer):
     def forward(self, x, update = False):

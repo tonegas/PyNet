@@ -19,17 +19,18 @@ class Vanilla(GenericLayer):
         self.outputnet = []
         self.state = []
         self.dJdh = []
-        self.popo = []
 
         self.dWxh = np.zeros_like(Wxh)
         self.dWhh = np.zeros_like(Whh)
         self.dWhy = np.zeros_like(Why)
+        self.dbh = np.zeros_like(bh)
+        self.dby = np.zeros_like(by)
         for ind in range(window_size):
             cWxh = MWeight(input_size, memory_size, weights=Wxh, dweights=self.dWxh)
             cWhh = MWeight(memory_size, memory_size, weights=Whh, dweights=self.dWhh)
-            cbh = VWeight(memory_size, weights=bh)
+            cbh = VWeight(memory_size, weights=bh, dweights=self.dbh)
             cWhy = MWeight(memory_size, output_size, weights=Why, dweights=self.dWhy)
-            cby = VWeight(output_size, weights=by)
+            cby = VWeight(output_size, weights=by, dweights=self.dby)
             self.statenet.append(
                 ComputationalGraphLayer(
                     Tanh(cWxh*x+cWhh*h+cbh)
@@ -42,7 +43,6 @@ class Vanilla(GenericLayer):
             )
             self.state.append(np.zeros(memory_size))
             self.dJdh.append(np.zeros(memory_size))
-            self.popo.append(np.zeros(memory_size))
 
     def forward(self, x, update = False):
         if self.window_step > 0:
@@ -64,7 +64,6 @@ class Vanilla(GenericLayer):
             self.window_step = self.window_size-1
         # print dJdy
         dJdx = self.outputnet[self.window_step].backward(dJdy, optimizer)
-        self.popo[self.window_step] = dJdx+self.dJdh[self.window_step]
         dJdx_dJdh = self.statenet[self.window_step].backward(dJdx+self.dJdh[self.window_step], optimizer)
         if self.window_step > 0:
             self.dJdh[self.window_step-1] = dJdx_dJdh[1]

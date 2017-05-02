@@ -10,12 +10,12 @@ class Trainer():
         J = loss.loss(y,t)
         dJdy = loss.dJdy_gradient(y,t)
         model.backward(dJdy, optimizer)
+        optimizer.update_model()
         return J, dJdy
 
     def learn_window(self, model, batch, loss, optimizer):
         this_batch_size = len(batch)
         # print this_batch_size
-        optimizer.store = True
         J_train_list = 0
         dJdy_list = 0
         y_list = []
@@ -36,11 +36,11 @@ class Trainer():
             # print 't'+str(t)
             dJdy = loss.dJdy_gradient(y_list[this_batch_size-1-i],t)
 
-            if this_batch_size == i+1:
-                optimizer.store = False
-
             model.backward(dJdy, optimizer)
             dJdy_list += np.linalg.norm(dJdy)/this_batch_size
+
+        optimizer.update_model()
+
         return J_train_list, dJdy_list
 
     def learn_throughtime(self, model, train, loss, optimizer, epochs, test = None):
@@ -85,7 +85,6 @@ class Trainer():
     def learn_minibatch(self, model, batch, loss, optimizer):
         this_batch_size = len(batch)
         # print this_batch_size
-        optimizer.store = True
         J_train_list = 0
         dJdy_list = 0
         for i,(x,t) in enumerate(batch):
@@ -97,13 +96,13 @@ class Trainer():
             # print y,t
             dJdy = loss.dJdy_gradient(y,t)
 
-            if this_batch_size == i+1:
-                optimizer.store = False
-
             model.backward(dJdy, optimizer)
 
             J_train_list += np.linalg.norm(J)/this_batch_size
             dJdy_list += np.linalg.norm(dJdy)/this_batch_size
+
+        optimizer.update_model()
+
         return J_train_list, dJdy_list
 
     def learn(self, model, train, loss, optimizer, epochs, batch_size = 1, test = None):

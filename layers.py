@@ -20,7 +20,7 @@ class LinearLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
         if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
         return dJdx
 
     def dJdW_gradient(self, dJdy):
@@ -46,7 +46,7 @@ class MWeightLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         dJdx = self.W.T.dot(dJdy)
         if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
         return dJdx
 
     def dJdW_gradient(self, dJdy):
@@ -54,12 +54,15 @@ class MWeightLayer(GenericLayer):
         return dJdW
 
 class VWeightLayer(GenericLayer):
-    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0, dweights=None):
         self.L1 = L1
         self.L2 = L2
         self.size = size
         self.W = define_weights(weights, 1, size)
-        self.dW = np.zeros_like(self.W)
+        if dweights is None:
+           self.dW = np.zeros_like(self.W)
+        else:
+            self.dW = dweights.reshape(self.W.size)
 
     def forward(self, x, update = False):
         self.x = x
@@ -67,7 +70,7 @@ class VWeightLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         if optimizer:
-            optimizer.update(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
 
         if type(self.x) is list:
             return [np.zeros_like(self.x[ind]) for ind in range(len(self.x))]

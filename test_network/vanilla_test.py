@@ -15,8 +15,8 @@ print 'data has %d characters, %d unique.' % (data_size, vocab_size)
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
 
-hidden_size = 100
-window_size = 25
+hidden_size = 200
+window_size = 100
 
 # v = GenericLayer.load_or_create(
 #     'vanilla.net',
@@ -80,11 +80,12 @@ while True:
         zip(train,target),
         # CrossEntropyLoss(),
         NegativeLogLikelihoodLoss(),
-        # GradientDescent(learning_rate=0.0001),
-        # GradientDescentMomentum(learning_rate=0.0001,momentum=0.001),
-        AdaGrad(learning_rate=0.001),
+        # GradientDescent(learning_rate=0.01),
+        GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
+        # AdaGrad(learning_rate=0.01),
         epochs
     )
+
     str = ''
     x = to_one_hot_vect(char_to_ix['c'],vocab_size)
     for i in range(50):
