@@ -40,7 +40,7 @@ v = Vanilla(
       bh = bh.copy(),
       by = by.copy()
     )
-# sm = SoftMaxLayer()
+sm = SoftMaxLayer()
 
 # x = to_one_hot_vect(char_to_ix['b'],vocab_size)
 # print len(x)
@@ -78,18 +78,18 @@ while True:
     J, dJdy = trainer.learn_throughtime(
         v,
         zip(train,target),
-        # CrossEntropyLoss(),
-        NegativeLogLikelihoodLoss(),
+        CrossEntropyLoss(),
+        # NegativeLogLikelihoodLoss(),
         # GradientDescent(learning_rate=0.01),
-        GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
-        # AdaGrad(learning_rate=0.01),
+        # GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
+        AdaGrad(learning_rate=0.1),
         epochs
     )
 
     str = ''
     x = to_one_hot_vect(char_to_ix['c'],vocab_size)
     for i in range(50):
-        y = v.forward(x)
+        y = sm.forward(v.forward(x))
         str += ix_to_char[np.random.choice(range(vocab_size), p=y.ravel())]
         x = to_one_hot_vect(np.argmax(y),vocab_size)
     print str

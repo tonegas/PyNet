@@ -38,17 +38,19 @@ class Vanilla(GenericLayer):
             )
             self.outputnet.append(
                 ComputationalGraphLayer(
-                    Softmax(cWhy*s+cby)
+                    # Softmax(cWhy*s+cby)
+                    cWhy*s+cby
                 )
             )
             self.state.append(np.zeros(memory_size))
             self.dJdh.append(np.zeros(memory_size))
 
+    def clear_memory(self):
+        for ind in range(self.window_size):
+            self.state[ind].fill(0.0)
+
     def forward(self, x, update = False):
-        if self.window_step > 0:
-            self.state[self.window_step] = self.statenet[self.window_step].forward([x,self.state[self.window_step-1]])
-        else:
-            self.state[self.window_step] = self.statenet[self.window_step].forward([x,np.zeros(self.memory_size)])
+        self.state[self.window_step] = self.statenet[self.window_step].forward([x,self.state[self.window_step-1]])
         # print 'state'+str(self.state[self.window_step])
         y = self.outputnet[self.window_step].forward(self.state[self.window_step])
         # self.dJdh[self.window_step] = np.zeros(memory_size)

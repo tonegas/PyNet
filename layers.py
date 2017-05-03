@@ -4,6 +4,12 @@ from utils import define_weights
 
 ############################### Layer for Sequential ###############################
 
+# class SharedWeights():
+#     def __init__(self):
+#         self.v =
+#         self.delta =
+#
+
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
@@ -50,7 +56,9 @@ class MWeightLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
+        # print np.dot(np.matrix(dJdy).T,np.matrix(self.x))
+        #dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
+        dJdW = np.dot(np.matrix(dJdy).T,np.matrix(self.x))
         return dJdW
 
 class VWeightLayer(GenericLayer):

@@ -61,6 +61,8 @@ class Trainer():
                 J_train_list[epoch] += J/batches_num
                 dJdy_list[epoch] += dJdy/batches_num
 
+            model.clear_memory()
+
             # if test:
             #     for x,t in test:
             #         J_test_list[epoch] += np.linalg.norm(loss.loss(model.forward(x),t))/test_num

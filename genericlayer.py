@@ -2,7 +2,6 @@ import inspect, os
 import dill as pickle
 import numpy as np
 
-
 class StoreNetwork:
     def save(self, file):
         f = open(file, "w")
@@ -41,7 +40,6 @@ class GenericLayer(StoreNetwork):
 
     def backward(self, dJdy, optimizer = None):
         return dJdy
-
 
 class WithElements:
     def __init__(self, *args):
