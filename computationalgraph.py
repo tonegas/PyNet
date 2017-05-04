@@ -80,15 +80,6 @@ class Sigmoid(Op):
             )
         )
 
-class Sigmoid(Op):
-    def __init__(self, operation):
-        super(Sigmoid,self).__init__(
-            Sequential(
-                operation.get(),
-                layers.SigmoidLayer
-            )
-        )
-
 class Tanh(Op):
     def __init__(self, operation):
         super(Tanh,self).__init__(

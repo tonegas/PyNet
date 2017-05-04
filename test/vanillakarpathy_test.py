@@ -10,9 +10,10 @@ from layers import SoftMaxLayer
 from standart_network.vanilla import Vanilla
 from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import GradientDescent, AdaGrad
+from trainer import Trainer
 
 # data I/O
-from utils import to_one_hot_vect
+from utils import to_one_hot_vect,to_hot_vect
 
 data = open('input.txt', 'r').read() # should be simple plain text file
 chars = list(set(data))
@@ -25,6 +26,7 @@ ix_to_char = { i:ch for i,ch in enumerate(chars) }
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
+epochs = 5
 
 # model parameters
 Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
@@ -48,6 +50,39 @@ van = Vanilla(
 cross = CrossEntropyLoss()
 opt = AdaGrad(learning_rate=learning_rate, clip=5)
 soft = SoftMaxLayer()
+
+vantr = Vanilla(
+  vocab_size,
+  vocab_size,
+  hidden_size,
+  seq_length,
+  Wxh = Wxh.copy(),
+  Whh = Whh.copy(),
+  Why = Why.copy(),
+  bh = bh.copy(),
+  by = by.copy()
+)
+
+crosstr = CrossEntropyLoss()
+opttr = AdaGrad(learning_rate=learning_rate, clip=5)
+trainer = Trainer()
+
+vantr2 = Vanilla(
+  vocab_size,
+  vocab_size,
+  hidden_size,
+  seq_length,
+  Wxh = Wxh.copy(),
+  Whh = Whh.copy(),
+  Why = Why.copy(),
+  bh = bh.copy(),
+  by = by.copy()
+)
+
+trainer2 = Trainer()
+inputs_all = [char_to_ix[ch] for ch in data[:-1]]
+targets_all = [char_to_ix[ch] for ch in data[1:]]
+print len(inputs_all)
 
 def lossFun(inputs, targets, hprev):
   """
@@ -74,6 +109,13 @@ def lossFun(inputs, targets, hprev):
     assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
     assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
     assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
+
+    assert_array_equal(vantr.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
+    assert_array_equal(vantr.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
+    assert_array_equal(vantr.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
+    assert_array_equal(vantr.outputnet[t].net.elements[0].elements[1].W.get(),Why)
+    assert_array_equal(vantr.outputnet[t].net.elements[1].W.get(),by.T[0])
+
     #
     # #Neg
     # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
@@ -95,6 +137,7 @@ def lossFun(inputs, targets, hprev):
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
   dbh, dby = np.zeros_like(bh), np.zeros_like(by)
   dhnext = np.zeros_like(hs[0])
+
   for t in reversed(xrange(len(inputs))):
     dy = np.copy(ps[t])
     dy[targets[t]] -= 1 # backprop into y. see http://cs231n.github.io/neural-networks-case-study/#grad if confused here
@@ -146,6 +189,8 @@ def lossFun(inputs, targets, hprev):
     dhnext = np.dot(Whh.T, dhraw)
 
   opt.update_model()
+  trainer.learn_window(vantr,zip(to_hot_vect(inputs,vocab_size),to_hot_vect(targets,vocab_size)),crosstr,opttr)
+
   for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
     np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
 
@@ -163,36 +208,67 @@ def sample(h, seed_ix, n):
     h = np.tanh(np.dot(Wxh, x) + np.dot(Whh, h) + bh)
     y = np.dot(Why, h) + by
     p = np.exp(y) / np.sum(np.exp(y))
-    ix = np.random.choice(range(vocab_size), p=p.ravel())
+    ix = np.argmax(p)#np.random.choice(range(vocab_size), p=p.ravel())
     x = np.zeros((vocab_size, 1))
     x[ix] = 1
     ixes.append(ix)
   return ixes
 
-n, p = 0, 0
+n, p, epoch = 0, 0, -1
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
 mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
 smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
-while n<500:
+while n < 500:
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
-  if p+seq_length+1 >= len(data) or n == 0:
+  if p+seq_length+1 > len(data) or n == 0:
     van.clear_memory()
+    vantr.clear_memory()
     hprev = np.zeros((hidden_size,1)) # reset RNN memory
     p = 0 # go from start of data
+    epoch += 1
+  # print (n,p,epoch)
   inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
   targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
+  if epoch == epochs:
+    trainer2.learn_throughtime(
+      vantr2,
+      zip(to_hot_vect(inputs_all,vocab_size),to_hot_vect(targets_all,vocab_size)),
+      CrossEntropyLoss(),
+      AdaGrad(learning_rate=learning_rate, clip=5),
+      epochs
+    )
+    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[0].elements[1].W.get(),Wxh)
+    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[1].elements[1].W.get(),Whh)
+    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[2].W.get(),bh.T[0])
+    assert_array_equal(vantr2.outputnet[0].net.elements[0].elements[1].W.get(),Why)
+    assert_array_equal(vantr2.outputnet[0].net.elements[1].W.get(),by.T[0])
 
-  # sample from the model now and then
-  if n % 100 == 0:
+    txtvan = ''
+    x = to_one_hot_vect(inputs[0],vocab_size)
+    for i in range(200):
+        y = soft.forward(vantr2.forward(x))
+        txtvan += ix_to_char[np.argmax(y)]#np.random.choice(range(vocab_size), p=y.ravel())]
+        x = to_one_hot_vect(np.argmax(y),vocab_size)
+    vantr2.clear_memory()
+
     sample_ix = sample(hprev, inputs[0], 200)
     txt = ''.join(ix_to_char[ix] for ix in sample_ix)
-    print '----\n %s \n----' % (txt, )
+    print '----\n %s \n %s \n----' % (txt,txtvan )
+
+    epoch = 0
+
+  # sample from the model now and then
+  # if n % epochs == 0:
+  #   sample_ix = sample(hprev, inputs[0], 200)
+  #   txt = ''.join(ix_to_char[ix] for ix in sample_ix)
+  #   print '----\n %s \n %s ----' % (txt,txtvan )
+
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
 
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
-  if n % 100 == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
+  if n % epochs == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
   # print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
 
   # perform parameter update with Adagrad

@@ -13,6 +13,7 @@ class Optimizer(object):
         pass
 
     def update_model(self):
+        # print self.weight_list
         for weight in self.weight_list:
             if self.clip is not None:
                 np.clip(self.weight_list[weight].dW, -self.clip, self.clip, out=self.weight_list[weight].dW)

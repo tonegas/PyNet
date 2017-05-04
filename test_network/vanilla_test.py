@@ -15,15 +15,9 @@ print 'data has %d characters, %d unique.' % (data_size, vocab_size)
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
 
-hidden_size = 200
-window_size = 100
+hidden_size = 100
+window_size = 25
 
-# v = GenericLayer.load_or_create(
-#     'vanilla.net',
-#     Vanilla(
-#         vocab_size,vocab_size,100
-#     )
-# )
 
 Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
 Whh = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden
@@ -31,15 +25,29 @@ Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
 bh = np.zeros((hidden_size, 1)) # hidden bias
 by = np.zeros((vocab_size, 1)) # output bias
 
-
-v = Vanilla(
-      vocab_size,vocab_size,hidden_size,window_size,
-      Wxh = Wxh,
-      Whh = Whh,
-      Why = Why,
-      bh = bh,
-      by = by
+load = 1
+if load:
+    v = GenericLayer.load_or_create(
+        'vanilla.net',
+        Vanilla(
+          vocab_size,vocab_size,hidden_size,window_size,
+          Wxh = Wxh,
+          Whh = Whh,
+          Why = Why,
+          bh = bh,
+          by = by
+        )
     )
+else:
+    v = Vanilla(
+          vocab_size,vocab_size,hidden_size,window_size,
+          Wxh = Wxh,
+          Whh = Whh,
+          Why = Why,
+          bh = bh,
+          by = by
+        )
+
 sm = SoftMaxLayer()
 
 # x = to_one_hot_vect(char_to_ix['b'],vocab_size)
@@ -47,14 +55,12 @@ sm = SoftMaxLayer()
 # print v.forward(x)
 # print v.backward(x)
 
-epochs = 100
+epochs = 50
 
 display = ShowTraining(epochs)
 
 trainer = Trainer(show_training = True, show_function=display.show)
-# opt = GradientDescentMomentum(learning_rate=0.01,momentum=0.5,clip=1)
-opt = AdaGrad(learning_rate=0.15,clip=5.0)
-cross = CrossEntropyLoss()
+
 train = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[0:-1]]
 target = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[1:]]
 
@@ -80,17 +86,18 @@ while True:
     J, dJdy = trainer.learn_throughtime(
         v,
         zip(train,target),
-        cross,
+        CrossEntropyLoss(),
         # NegativeLogLikelihoodLoss(),
         # GradientDescent(learning_rate=0.01),
         # GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
-        opt,
+        AdaGrad(learning_rate=0.1,clip=100.0),
         epochs
     )
+    v.save('vanilla.net')
 
     str = ''
     x = to_one_hot_vect(char_to_ix['c'],vocab_size)
-    for i in range(50):
+    for i in range(200):
         y = sm.forward(v.forward(x))
         str += ix_to_char[np.random.choice(range(vocab_size), p=y.ravel())]
         x = to_one_hot_vect(np.argmax(y),vocab_size)
