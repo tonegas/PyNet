@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class ShowTraining():
-    def __init__(self, epochs_num = None):
+    def __init__(self, epochs_num = None, weights_list = None):
         plt.ion()
         self.fig1 = plt.figure(1)
         self.ax = self.fig1.add_subplot(111)
@@ -24,7 +24,24 @@ class ShowTraining():
         if epochs_num is not None:
             self.ax2.set_xlim([0,epochs_num])
 
+        if weights_list is not None:
+            self.fig3 = plt.figure(3)
+            self.ax3 = self.fig3.add_subplot(111)
+            self.ax3.set_title('Weights Norm2')
+            self.weightsline = []
+            self.weights = []
+            for weight in weights_list:
+                self.weights.append(weights_list[weight])
+                line, = self.ax3.plot(xrange(len([])), [],  marker='o', label=weight)
+                self.weightsline.append(line)
+            self.ax3.set_xlabel('Epochs')
+            self.ax3.set_ylabel(r'$||W_i||_2$')
+            if epochs_num is not None:
+                self.ax3.set_xlim([0,epochs_num])
+        plt.ioff()
+
     def show(self, epoch, J_train_list, dJdy_list = None, J_test_list = None):
+        plt.ion()
         self.train.set_xdata(xrange(len(J_train_list[:epoch+1])))
         self.train.set_ydata(J_train_list[:epoch+1])
         if J_test_list is not None:
@@ -40,6 +57,17 @@ class ShowTraining():
         self.ax2.set_ylim([min(dJdy_list)-min(dJdy_list)*0.1,max(dJdy_list)+max(dJdy_list)*0.1])
         self.fig2.canvas.draw()
 
+        if len(self.weights) > 0:
+            minval = 0
+            maxval = 0
+            for weight,weightline in zip(self.weights,self.weightsline):
+                weightline.set_xdata(xrange(len(dJdy_list[:epoch+1])))
+                weightline.set_ydata(np.append(weightline.get_ydata(),np.linalg.norm(weight.get())))
+                minval = minval if minval < min(weightline.get_ydata()) else min(weightline.get_ydata())
+                maxval = maxval if maxval > max(weightline.get_ydata()) else max(weightline.get_ydata())
+            self.ax3.set_ylim([minval-minval*0.1,maxval+maxval*0.1])
+            self.fig3.canvas.draw()
+        plt.ioff()
 
 class Printer2D():
     def forward_all(self, model, xs):

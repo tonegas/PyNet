@@ -2,6 +2,7 @@
 Minimal character-level Vanilla RNN model. Written by Andrej Karpathy (@karpathy)
 BSD License
 """
+import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
@@ -26,7 +27,7 @@ ix_to_char = { i:ch for i,ch in enumerate(chars) }
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
-epochs = 5
+epochs = 10
 
 # model parameters
 Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
@@ -82,7 +83,6 @@ vantr2 = Vanilla(
 trainer2 = Trainer()
 inputs_all = [char_to_ix[ch] for ch in data[:-1]]
 targets_all = [char_to_ix[ch] for ch in data[1:]]
-print len(inputs_all)
 
 def lossFun(inputs, targets, hprev):
   """
@@ -213,70 +213,72 @@ def sample(h, seed_ix, n):
     x[ix] = 1
     ixes.append(ix)
   return ixes
+class VanillaTests(unittest.TestCase):
+  def test_all(self):
+    n, p, epoch = 0, 0, -1
+    mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
+    mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
+    smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
+    while n <= 400:
+      print (n,p,epoch)
+      # prepare inputs (we're sweeping from left to right in steps seq_length long)
+      if p+seq_length+1 > len(data) or n == 0:
+        van.clear_memory()
+        vantr.clear_memory()
+        hprev = np.zeros((hidden_size,1)) # reset RNN memory
+        p = 0 # go from start of data
+        epoch += 1
+      # print (n,p,epoch)
+      inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
+      targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
+      if epoch == epochs:
+        trainer2.learn_throughtime(
+          vantr2,
+          zip(to_hot_vect(inputs_all,vocab_size),to_hot_vect(targets_all,vocab_size)),
+          CrossEntropyLoss(),
+          AdaGrad(learning_rate=learning_rate, clip=5),
+          epochs
+        )
+        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[0].elements[1].W.get(),Wxh)
+        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[1].elements[1].W.get(),Whh)
+        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[2].W.get(),bh.T[0])
+        assert_array_equal(vantr2.outputnet[0].net.elements[0].elements[1].W.get(),Why)
+        assert_array_equal(vantr2.outputnet[0].net.elements[1].W.get(),by.T[0])
 
-n, p, epoch = 0, 0, -1
-mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
-mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
-smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
-while n < 500:
-  # prepare inputs (we're sweeping from left to right in steps seq_length long)
-  if p+seq_length+1 > len(data) or n == 0:
-    van.clear_memory()
-    vantr.clear_memory()
-    hprev = np.zeros((hidden_size,1)) # reset RNN memory
-    p = 0 # go from start of data
-    epoch += 1
-  # print (n,p,epoch)
-  inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
-  targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
-  if epoch == epochs:
-    trainer2.learn_throughtime(
-      vantr2,
-      zip(to_hot_vect(inputs_all,vocab_size),to_hot_vect(targets_all,vocab_size)),
-      CrossEntropyLoss(),
-      AdaGrad(learning_rate=learning_rate, clip=5),
-      epochs
-    )
-    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[0].elements[1].W.get(),Wxh)
-    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[1].elements[1].W.get(),Whh)
-    assert_array_equal(vantr2.statenet[0].net.elements[0].elements[2].W.get(),bh.T[0])
-    assert_array_equal(vantr2.outputnet[0].net.elements[0].elements[1].W.get(),Why)
-    assert_array_equal(vantr2.outputnet[0].net.elements[1].W.get(),by.T[0])
+        txtvan = ''
+        x = to_one_hot_vect(inputs[0],vocab_size)
+        for i in range(200):
+            y = soft.forward(vantr2.forward(x))
+            txtvan += ix_to_char[np.argmax(y)]#np.random.choice(range(vocab_size), p=y.ravel())]
+            x = to_one_hot_vect(np.argmax(y),vocab_size)
+        vantr2.clear_memory()
 
-    txtvan = ''
-    x = to_one_hot_vect(inputs[0],vocab_size)
-    for i in range(200):
-        y = soft.forward(vantr2.forward(x))
-        txtvan += ix_to_char[np.argmax(y)]#np.random.choice(range(vocab_size), p=y.ravel())]
-        x = to_one_hot_vect(np.argmax(y),vocab_size)
-    vantr2.clear_memory()
+        sample_ix = sample(hprev, inputs[0], 200)
+        txt = ''.join(ix_to_char[ix] for ix in sample_ix)
+        print '----\n %s \n %s \n----' % (txt,txtvan )
 
-    sample_ix = sample(hprev, inputs[0], 200)
-    txt = ''.join(ix_to_char[ix] for ix in sample_ix)
-    print '----\n %s \n %s \n----' % (txt,txtvan )
+        epoch = 0
 
-    epoch = 0
-
-  # sample from the model now and then
-  # if n % epochs == 0:
-  #   sample_ix = sample(hprev, inputs[0], 200)
-  #   txt = ''.join(ix_to_char[ix] for ix in sample_ix)
-  #   print '----\n %s \n %s ----' % (txt,txtvan )
+      # sample from the model now and then
+      # if n % epochs == 0:
+      #   sample_ix = sample(hprev, inputs[0], 200)
+      #   txt = ''.join(ix_to_char[ix] for ix in sample_ix)
+      #   print '----\n %s \n %s ----' % (txt,txtvan )
 
 
-  # forward seq_length characters through the net and fetch gradient
-  loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
+      # forward seq_length characters through the net and fetch gradient
+      loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
 
-  smooth_loss = smooth_loss * 0.999 + loss * 0.001
-  if n % epochs == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
-  # print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
+      smooth_loss = smooth_loss * 0.999 + loss * 0.001
+      if n % epochs == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
+      # print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
 
-  # perform parameter update with Adagrad
-  for param, dparam, mem in zip([Wxh, Whh, Why, bh, by],
-                                [dWxh, dWhh, dWhy, dbh, dby],
-                                [mWxh, mWhh, mWhy, mbh, mby]):
-    mem += dparam * dparam
-    param += -learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
+      # perform parameter update with Adagrad
+      for param, dparam, mem in zip([Wxh, Whh, Why, bh, by],
+                                    [dWxh, dWhh, dWhy, dbh, dby],
+                                    [mWxh, mWhh, mWhy, mbh, mby]):
+        mem += dparam * dparam
+        param += -learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
 
-  p += seq_length # move data pointer
-  n += 1 # iteration counter
+      p += seq_length # move data pointer
+      n += 1 # iteration counter

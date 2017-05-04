@@ -65,12 +65,9 @@ class Trainer():
         J_train_list = 0
         dJdy_list = 0
         for i,(x,t) in enumerate(batch):
-            # print 'x'+str(x)
-            y = model.forward(x, True)
-            # print 'y'+str(y)
-            J = loss.loss(y,t)
 
-            # print y,t
+            y = model.forward(x, True)
+            J = loss.loss(y,t)
             dJdy = loss.dJdy_gradient(y,t)
 
             model.backward(dJdy, optimizer)

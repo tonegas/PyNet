@@ -7,7 +7,7 @@ import utils
 
 
 class LinearLayer(GenericLayer):
-    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, input_size, output_size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
         self.input_size = input_size
@@ -32,7 +32,7 @@ class LinearLayer(GenericLayer):
         return dJdW
 
 class MWeightLayer(GenericLayer):
-    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, input_size, output_size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
         self.input_size = input_size
@@ -59,7 +59,7 @@ class MWeightLayer(GenericLayer):
         return dJdW
 
 class VWeightLayer(GenericLayer):
-    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0):
+    def __init__(self, size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
         self.size = size

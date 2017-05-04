@@ -4,12 +4,13 @@ from sklearn import datasets
 
 from layers import LinearLayer, MulLayer, SumLayer, VWeightLayer, ComputationalGraphLayer
 from losses import SquaredLoss, NegativeLogLikelihoodLoss, CrossEntropyLoss
-from optimizers import GradientDescent, GradientDescentMomentum
+from optimizers import GradientDescent, GradientDescentMomentum, AdaGrad
 from network import Sequential, Parallel
 from groupnetworks import ParallelGroup, SumGroup, MulGroup
 from genericlayer import GenericLayer
 from trainer import Trainer
 from computationalgraph import VWeight, Input
+from printers import ShowTraining
 
 # y = a*x^2+b*x+c
 # n = Sequential(
@@ -70,36 +71,39 @@ from computationalgraph import VWeight, Input
 
 #equal to
 varx = Input('x','x')
-a = VWeight(1)
-b = VWeight(1)
-c = VWeight(1)
+a = VWeight(1,L1=0.0,L2=0.05,weights=np.array([10.0]))
+b = VWeight(1,L2=0.0,weights=np.array([10.0]))
+c = VWeight(1,L2=0.0,weights=np.array([10.0]))
 # x = Input(lv,'x')
 n = ComputationalGraphLayer(a*varx**2+b*varx+c)
 
 #
 train = []
-for i,x in enumerate(np.linspace(-1,1,50)):
-    train.append((np.array([x]),np.array([3.2*x**2+5.2*x+7.1])))
-print (train[0][0],train[0][1])
-print n.forward(train[0][0])
-print n.numeric_gradient(train[0][0])
-print n.backward(np.array([1.0]))
+for i,x in enumerate(np.linspace(-0.5,0.5,50)):
+    train.append((np.array([x]),np.array([5.2*x+7.1])))
+# print (train[0][0],train[0][1])
+# print n.forward(train[0][0])
+# print n.numeric_gradient(train[0][0])
+# print n.backward(np.array([1.0]))
 
-t = Trainer(show_training=True)
+printer = ShowTraining(epochs_num = 20, weights_list={'a':a.net.W,'b':b.net.W,'c':c.net.W})
+t = Trainer(show_training = True,show_function = printer.show)
+
 #
 J_list, dJdy_list = t.learn(
     model = n,
     train = train,
     loss = SquaredLoss(),
-    optimizer = GradientDescent(learning_rate=0.15),
-    epochs = 10
+    #optimizer = GradientDescentMomentum(learning_rate=0.15,momentum=0.5),
+    optimizer = AdaGrad(learning_rate=0.6),
+    epochs = 20
 )
 
 test = []
 for i,x in enumerate(np.linspace(-10,10,50)):
-    test.append((np.array([x]),np.array([3.2*x**2+5.2*x+7.1])))
+    test.append((np.array([x]),np.array([5.2*x+7.1])))
 #
-plt.figure(3)
+plt.figure(4)
 plt.title('Errors History (J)')
 plt.plot(np.array([x for (x,t) in test]), np.array([t for (x,t) in test]), color='red')
 plt.plot(np.array([x for (x,t) in test]), np.array([n.forward(x) for (x,t) in test]), color='green')
@@ -107,12 +111,7 @@ plt.plot(np.array([x for (x,t) in test]), np.array([n.forward(x) for (x,t) in te
 plt.xlabel('x')
 plt.ylabel('y')
 
-print (train[0][1],n.forward(train[0][0]))
-
-plt.figure(1)
-plt.title('Points and Function')
-plt.plot(xrange(len(J_list)), J_list, color='red')
-
+plt.ion()
 plt.show()
 
 # n2 = LinearLayer(3,1)
@@ -148,3 +147,5 @@ plt.show()
 # plt.plot(xrange(len(J_list)), J_list, color='red')
 #
 # plt.show()
+
+raw_input('Press ENTER to exit')

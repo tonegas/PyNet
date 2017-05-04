@@ -48,6 +48,7 @@ class SharedWeights():
             return weights_val.reshape(weights_val.shape[0]).copy()
         elif len(weights_val.shape) == 2:
             if weights_val.shape[0] == 1:
+                print weights_val.reshape(weights_val.shape[1])
                 return weights_val.reshape(weights_val.shape[1]).copy()
             elif weights_val.shape[1] == 1:
                 return weights_val.reshape(weights_val.shape[0]).copy()
