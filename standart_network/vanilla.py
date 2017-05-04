@@ -2,6 +2,7 @@ import numpy as np
 import collections
 
 from genericlayer import GenericLayer
+from utils import SharedWeights
 from network import Sequential
 from layers import  TanhLayer, LinearLayer, MWeightLayer, ComputationalGraphLayer
 from computationalgraph import MWeight, VWeight, Input, Tanh, Softmax
@@ -20,17 +21,18 @@ class Vanilla(GenericLayer):
         self.state = []
         self.dJdh = []
 
-        self.dWxh = np.zeros_like(Wxh)
-        self.dWhh = np.zeros_like(Whh)
-        self.dWhy = np.zeros_like(Why)
-        self.dbh = np.zeros_like(bh)
-        self.dby = np.zeros_like(by)
+        self.Wxh = SharedWeights(Wxh)
+        self.Whh = SharedWeights(Whh)
+        self.Why = SharedWeights(Why)
+        self.bh = SharedWeights(bh)
+        self.by = SharedWeights(by)
+
         for ind in range(window_size):
-            cWxh = MWeight(input_size, memory_size, weights=Wxh, dweights=self.dWxh)
-            cWhh = MWeight(memory_size, memory_size, weights=Whh, dweights=self.dWhh)
-            cbh = VWeight(memory_size, weights=bh, dweights=self.dbh)
-            cWhy = MWeight(memory_size, output_size, weights=Why, dweights=self.dWhy)
-            cby = VWeight(output_size, weights=by, dweights=self.dby)
+            cWxh = MWeight(input_size, memory_size, weights=self.Wxh)
+            cWhh = MWeight(memory_size, memory_size, weights=self.Whh)
+            cbh = VWeight(memory_size, weights=self.bh)
+            cWhy = MWeight(memory_size, output_size, weights=self.Why)
+            cby = VWeight(output_size, weights=self.by)
             self.statenet.append(
                 ComputationalGraphLayer(
                     Tanh(cWxh*x+cWhh*h+cbh)

@@ -5,6 +5,7 @@ BSD License
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
+from utils import SharedWeights
 from layers import SoftMaxLayer
 from standart_network.vanilla import Vanilla
 from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss
@@ -45,7 +46,7 @@ van = Vanilla(
 )
 #negLog = NegativeLogLikelihoodLoss()
 cross = CrossEntropyLoss()
-opt = AdaGrad(learning_rate=learning_rate)
+opt = AdaGrad(learning_rate=learning_rate, clip=5)
 soft = SoftMaxLayer()
 
 def lossFun(inputs, targets, hprev):
@@ -70,9 +71,9 @@ def lossFun(inputs, targets, hprev):
     assert_array_equal(van.window_step,t)
     assert_array_equal(van.state[t-1],hs[t-1].T[0])
     assert_array_equal(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]]),hs[t].T[0])
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W,Wxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W,Whh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W,bh.T[0])
+    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
     #
     # #Neg
     # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
@@ -82,8 +83,8 @@ def lossFun(inputs, targets, hprev):
     # assert_array_almost_equal(van.forward(xs[t].T[0]),ps[t].T[0])
     #
     # Cross
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W,Why)
-    assert_array_equal(van.outputnet[t].net.elements[1].W,by.T[0])
+    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get(),Why)
+    assert_array_equal(van.outputnet[t].net.elements[1].W.get(),by.T[0])
     assert_array_equal(van.outputnet[t].forward(hs[t].T[0]),ys[t].T[0])
     assert_array_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]])),ys[t].T[0])
     assert_array_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],van.state[t-1]])),ys[t].T[0])
@@ -128,25 +129,25 @@ def lossFun(inputs, targets, hprev):
 
     van.backward(err,opt)
 
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].dW,dWhy)
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W,Why)
-    assert_array_equal(van.outputnet[t].net.elements[1].dW,dby.T[0])
-    assert_array_almost_equal(van.outputnet[t].net.elements[1].W,by.T[0])
+    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get_dW(),dWhy)
+    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get(),Why)
+    assert_array_equal(van.outputnet[t].net.elements[1].W.get_dW(),dby.T[0])
+    assert_array_almost_equal(van.outputnet[t].net.elements[1].W.get(),by.T[0])
     #
 
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].dW,dWxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].dW,dWhh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].dW,dbh.T[0])
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W,Wxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W,Whh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W,bh.T[0])
+    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get_dW(),dWxh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get_dW(),dWhh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get_dW(),dbh.T[0])
+    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
+    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
     assert_array_equal(van.dJdh[t],dhnext.T[0])
 
     dhnext = np.dot(Whh.T, dhraw)
 
   opt.update_model()
-  # for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
-  #   np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
+  for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
+    np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
 
   return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
 

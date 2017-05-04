@@ -1,14 +1,10 @@
 import numpy as np
 from genericlayer import GenericLayer
-from utils import define_weights
+import utils
+
 
 ############################### Layer for Sequential ###############################
 
-# class SharedWeights():
-#     def __init__(self):
-#         self.v =
-#         self.delta =
-#
 
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
@@ -16,43 +12,44 @@ class LinearLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.W = define_weights(weights, input_size + 1, output_size)
-        self.dW = np.zeros_like(self.W)
+        if isinstance(weights,utils.SharedWeights):
+            self.W = weights
+        else:
+            self.W = utils.SharedWeights(weights, input_size + 1, output_size)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
-        return self.W.dot(self.x)
+        return self.W.get().dot(self.x)
 
     def backward(self, dJdy, optimizer = None):
-        dJdx = self.W[:, 0:self.input_size].T.dot(dJdy)
+        dJdx = self.W.get()[:, 0:self.input_size].T.dot(dJdy)
         if optimizer:
-            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self.W, self.dJdW_gradient(dJdy))
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
         return dJdW
 
 class MWeightLayer(GenericLayer):
-    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0, dweights=None):
+    def __init__(self, input_size, output_size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.W = define_weights(weights, input_size, output_size)
-        if dweights is None:
-           self.dW = np.zeros_like(self.W)
+        if isinstance(weights,utils.SharedWeights):
+            self.W = weights
         else:
-            self.dW = dweights
+            self.W = utils.SharedWeights(weights, input_size, output_size)
 
     def forward(self, x, update = False):
         self.x = x
-        return self.W.dot(self.x)
+        return self.W.get().dot(self.x)
 
     def backward(self, dJdy, optimizer = None):
-        dJdx = self.W.T.dot(dJdy)
+        dJdx = self.W.get().T.dot(dJdy)
         if optimizer:
-            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self.W, self.dJdW_gradient(dJdy))
         return dJdx
 
     def dJdW_gradient(self, dJdy):
@@ -62,23 +59,22 @@ class MWeightLayer(GenericLayer):
         return dJdW
 
 class VWeightLayer(GenericLayer):
-    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0, dweights=None):
+    def __init__(self, size, weights ='random', L1 = 0.0, L2 = 0.0):
         self.L1 = L1
         self.L2 = L2
         self.size = size
-        self.W = define_weights(weights, 1, size)
-        if dweights is None:
-           self.dW = np.zeros_like(self.W)
+        if isinstance(weights,utils.SharedWeights):
+            self.W = weights
         else:
-            self.dW = dweights.reshape(self.W.size)
+            self.W = utils.SharedWeights(weights, 1, size)
 
     def forward(self, x, update = False):
         self.x = x
-        return self.W
+        return self.W.get()
 
     def backward(self, dJdy, optimizer = None):
         if optimizer:
-            optimizer.update_dW(self, self.dJdW_gradient(dJdy))
+            optimizer.update_dW(self.W, self.dJdW_gradient(dJdy))
 
         if type(self.x) is list:
             return [np.zeros_like(self.x[ind]) for ind in range(len(self.x))]
@@ -86,7 +82,7 @@ class VWeightLayer(GenericLayer):
             return np.zeros_like(self.x)
 
     def dJdW_gradient(self, dJdy):
-        return dJdy + self.L1 * np.sign(self.W) + self.L2 * self.W
+        return dJdy + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
 
 class Lock(GenericLayer):
     def __init__(self, net):

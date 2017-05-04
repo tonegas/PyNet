@@ -1,14 +1,14 @@
 from mnist_load import load_mnist_dataset
 import numpy as np
 import matplotlib.pyplot as plt
-from layers import NormalizationLayer, LinearLayer, TanhLayer, ReluLayer, SigmoidLayer, define_weights
+from layers import NormalizationLayer, LinearLayer, TanhLayer, ReluLayer, SigmoidLayer
 from network import Sequential
 from genericlayer import StoreNetwork
 from trainer import Trainer
-from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss, SquaredLoss, to_one_hot_vect
+from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss, SquaredLoss
 from optimizers import GradientDescent, GradientDescentMomentum, AdaGrad
 from printers import ShowTraining
-
+from utils import SharedWeights, to_one_hot_vect
 
 from standart_network.autoencoder import AutoEncoder
 
@@ -22,7 +22,7 @@ epochs = 500
 train = load_mnist_dataset(dataset = "training", path = "./mnist")
 test = load_mnist_dataset(dataset = "testing", path = "./mnist")
 
-W = define_weights('gaussian', 784, 32)
+W = SharedWeights('gaussian', 784, 32)
 
 if load_net:
     print "Load Network"
@@ -32,9 +32,9 @@ else:
     #Two layer network
     ae = AutoEncoder(784, [
         {"size" : 32, "output_layer" :TanhLayer, "weights" : W},
-        {"size" : 784, "output_layer" :TanhLayer, "weights": W.T}
+        {"size" : 784, "output_layer" :TanhLayer}#, "weights": W.T()}
     ])
-    ae.choose_network([0,1],[0])
+    ae.choose_network([0,1])
     #ae.choose_network()
     model = Sequential([
         NormalizationLayer(0,255,-0.1,0.1),
@@ -78,7 +78,7 @@ for ind, (t,v) in enumerate(train[:10]):
 for ind in range(25):
     plt.figure(13)
     plt.subplot(5,5,ind+1)
-    plt.imshow(W[ind,:].reshape(28,28), cmap=plt.get_cmap('Greys'))
+    plt.imshow(W.get()[ind,:].reshape(28,28), cmap=plt.get_cmap('Greys'))
 
 plt.show()
 

@@ -34,11 +34,11 @@ by = np.zeros((vocab_size, 1)) # output bias
 
 v = Vanilla(
       vocab_size,vocab_size,hidden_size,window_size,
-      Wxh = Wxh.copy(),
-      Whh = Whh.copy(),
-      Why = Why.copy(),
-      bh = bh.copy(),
-      by = by.copy()
+      Wxh = Wxh,
+      Whh = Whh,
+      Why = Why,
+      bh = bh,
+      by = by
     )
 sm = SoftMaxLayer()
 
@@ -47,12 +47,14 @@ sm = SoftMaxLayer()
 # print v.forward(x)
 # print v.backward(x)
 
-epochs = 50
+epochs = 100
 
 display = ShowTraining(epochs)
 
 trainer = Trainer(show_training = True, show_function=display.show)
-
+# opt = GradientDescentMomentum(learning_rate=0.01,momentum=0.5,clip=1)
+opt = AdaGrad(learning_rate=0.15,clip=5.0)
+cross = CrossEntropyLoss()
 train = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[0:-1]]
 target = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[1:]]
 
@@ -78,11 +80,11 @@ while True:
     J, dJdy = trainer.learn_throughtime(
         v,
         zip(train,target),
-        CrossEntropyLoss(),
+        cross,
         # NegativeLogLikelihoodLoss(),
         # GradientDescent(learning_rate=0.01),
         # GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
-        AdaGrad(learning_rate=0.1),
+        opt,
         epochs
     )
 

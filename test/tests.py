@@ -27,19 +27,19 @@ class LinearLayerTests(unittest.TestCase):
         l = LinearLayer(2,6,'ones')
         y = l.forward(np.array([2.0,2.0]))
         dJdW = l.dJdW_gradient(np.array([1.0,2.0,3.0,4.0,1.0,1.0]))
-        self.assertEqual(l.W.shape,(6,3))
+        self.assertEqual(l.W.get().shape,(6,3))
         self.assertEqual(dJdW.shape,(6,3))
 
         l = LinearLayer(2,3,'ones')
         y = l.forward(np.array([2.0,2.0]))
         dJdW = l.dJdW_gradient(np.array([1.0,2.0,3.0]))
-        self.assertEqual(l.W.shape,(3,3))
+        self.assertEqual(l.W.get().shape,(3,3))
         self.assertEqual(dJdW.shape,(3,3))
         assert_array_equal(dJdW,np.matrix([[2.0,2.0,1.0],[4.0,4.0,2.0],[6.0,6.0,3.0]]))
 
     def test_numeric_gradient(self):
         l = LinearLayer(2,3,'random')
-        weights = l.W
+        weights = l.W.get()
         x = np.random.rand(2)
         grad = l.numeric_gradient(x)
         assert_almost_equal(grad,weights[:,0:-1])
