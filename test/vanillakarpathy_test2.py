@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from utils import SharedWeights
 from layers import SoftMaxLayer
-from standart_network.vanilla import Vanilla
+from standart_network.vanilla import Vanilla, VanillaNet
 from losses import NegativeLogLikelihoodLoss, CrossEntropyLoss
 from optimizers import GradientDescent, AdaGrad
 from trainer import Trainer
@@ -36,51 +36,23 @@ Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
 bh = np.zeros((hidden_size, 1)) # hidden bias
 by = np.zeros((vocab_size, 1)) # output bias
 
-van = Vanilla(
+van = VanillaNet(
   vocab_size,
   vocab_size,
   hidden_size,
-  seq_length,
-  Wxh = SharedWeights(Wxh.copy()),
-  Whh = Whh.copy(),
-  Why = Why.copy(),
-  bh = bh.copy(),
-  by = by.copy()
-)
-#negLog = NegativeLogLikelihoodLoss()
-cross = CrossEntropyLoss()
-opt = AdaGrad(learning_rate=learning_rate, clip=5)
-soft = SoftMaxLayer()
-
-vantr = Vanilla(
-  vocab_size,
-  vocab_size,
-  hidden_size,
-  seq_length,
   Wxh = Wxh.copy(),
   Whh = Whh.copy(),
   Why = Why.copy(),
   bh = bh.copy(),
   by = by.copy()
 )
+van.on_message('init_nodes', seq_length)
+#negLog = NegativeLogLikelihoodLoss()
+cross = CrossEntropyLoss()
+opt = AdaGrad(learning_rate=learning_rate, clip=5)
+soft = SoftMaxLayer()
 
-crosstr = CrossEntropyLoss()
-opttr = AdaGrad(learning_rate=learning_rate, clip=5)
 trainer = Trainer()
-
-vantr2 = Vanilla(
-  vocab_size,
-  vocab_size,
-  hidden_size,
-  seq_length,
-  Wxh = SharedWeights(Wxh.copy()),
-  Whh = Whh.copy(),
-  Why = Why.copy(),
-  bh = bh.copy(),
-  by = by.copy()
-)
-
-trainer2 = Trainer()
 inputs_all = [char_to_ix[ch] for ch in data[:-1]]
 targets_all = [char_to_ix[ch] for ch in data[1:]]
 
@@ -103,36 +75,6 @@ def lossFun(inputs, targets, hprev):
     ps[t] = np.exp(ys[t]-np.max(ys[t])) / np.sum(np.exp(ys[t]-np.max(ys[t]))) # probabilities for next chars
     loss += -np.log(ps[t][targets[t],0]) # softmax (cross-entropy loss)
 
-    assert_array_equal(van.window_step,t)
-    assert_array_equal(van.state[t-1],hs[t-1].T[0])
-    assert_array_equal(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]]),hs[t].T[0])
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
-
-    assert_array_equal(vantr.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
-    assert_array_equal(vantr.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
-    assert_array_equal(vantr.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
-    assert_array_equal(vantr.outputnet[t].net.elements[0].elements[1].W.get(),Why)
-    assert_array_equal(vantr.outputnet[t].net.elements[1].W.get(),by.T[0])
-
-    #
-    # #Neg
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,by.T[0])
-    # assert_array_almost_equal(van.outputnet[t].forward(hs[t].T[0]),ps[t].T[0])
-    # assert_array_almost_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]])),ps[t].T[0])
-    # assert_array_almost_equal(van.forward(xs[t].T[0]),ps[t].T[0])
-    #
-    # Cross
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get(),Why)
-    assert_array_equal(van.outputnet[t].net.elements[1].W.get(),by.T[0])
-    assert_array_equal(van.outputnet[t].forward(hs[t].T[0]),ys[t].T[0])
-    assert_array_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],hs[t-1].T[0]])),ys[t].T[0])
-    assert_array_equal(van.outputnet[t].forward(van.statenet[t].forward([xs[t].T[0],van.state[t-1]])),ys[t].T[0])
-    assert_array_equal(van.forward(xs[t].T[0]),ys[t].T[0])
-    assert_array_equal(soft.forward(ys[t].T[0]),ps[t].T[0])
-
   # backward pass: compute gradients going backwards
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
   dbh, dby = np.zeros_like(bh), np.zeros_like(by)
@@ -149,47 +91,7 @@ def lossFun(inputs, targets, hprev):
     dWxh += np.dot(dhraw, xs[t].T)
     dWhh += np.dot(dhraw, hs[t-1].T)
 
-    #
-    # #Neg
-    # van.backward(negLog.dJdy_gradient(ps[t].T[0],to_one_hot_vect(targets[t],vocab_size)),opt)
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].x,hs[t].T[0])
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].dW,dWhy)
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].dW,dby.T[0])
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[0].elements[1].W,Why)
-    # assert_array_almost_equal(van.outputnet[t].net.elements[0].elements[1].W,by.T[0])
-    #
-    #Cross
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].x,hs[t].T[0])
-    assert_array_equal(van.outputnet[t].net.forward(hs[t].T[0]),ys[t].T[0])
-    assert_array_equal(soft.forward(van.outputnet[t].net.forward(hs[t].T[0])),ps[t].T[0])
-    assert_array_equal(soft.forward(van.outputnet[t].net.forward(hs[t].T[0]))-to_one_hot_vect(targets[t],vocab_size),dy.T[0])
-
-    err = cross.dJdy_gradient(ys[t].T[0],to_one_hot_vect(targets[t],vocab_size))
-
-    assert_array_equal(soft.forward(van.outputnet[t].net.forward(hs[t].T[0]))-to_one_hot_vect(targets[t],vocab_size),dy.T[0])
-    assert_array_equal(ps[t].T[0]-to_one_hot_vect(targets[t],vocab_size),dy.T[0])
-    assert_array_equal(err,dy.T[0])
-
-    van.backward(err,opt)
-
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get_dW(),dWhy)
-    assert_array_equal(van.outputnet[t].net.elements[0].elements[1].W.get(),Why)
-    assert_array_equal(van.outputnet[t].net.elements[1].W.get_dW(),dby.T[0])
-    assert_array_almost_equal(van.outputnet[t].net.elements[1].W.get(),by.T[0])
-    #
-
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get_dW(),dWxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get_dW(),dWhh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get_dW(),dbh.T[0])
-    assert_array_equal(van.statenet[t].net.elements[0].elements[0].elements[1].W.get(),Wxh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[1].elements[1].W.get(),Whh)
-    assert_array_equal(van.statenet[t].net.elements[0].elements[2].W.get(),bh.T[0])
-    assert_array_equal(van.dJdh[t],dhnext.T[0])
-
     dhnext = np.dot(Whh.T, dhraw)
-
-  opt.update_model()
-  trainer.learn_window(vantr,zip(to_hot_vect(inputs,vocab_size),to_hot_vect(targets,vocab_size)),crosstr,opttr)
 
   for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
     np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
@@ -213,6 +115,7 @@ def sample(h, seed_ix, n):
     x[ix] = 1
     ixes.append(ix)
   return ixes
+
 class VanillaTests(unittest.TestCase):
   def test_all(self):
     n, p, epoch = 0, 0, -1
@@ -223,8 +126,6 @@ class VanillaTests(unittest.TestCase):
       print (n,p,epoch)
       # prepare inputs (we're sweeping from left to right in steps seq_length long)
       if p+seq_length+1 > len(data) or n == 0:
-        van.clear_memory()
-        vantr.clear_memory()
         hprev = np.zeros((hidden_size,1)) # reset RNN memory
         p = 0 # go from start of data
         epoch += 1
@@ -232,26 +133,33 @@ class VanillaTests(unittest.TestCase):
       inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
       targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
       if epoch == epochs:
-        trainer2.learn_throughtime(
-          vantr2,
+        trainer.learn_throughtime(
+          van,
           zip(to_hot_vect(inputs_all,vocab_size),to_hot_vect(targets_all,vocab_size)),
           CrossEntropyLoss(),
-          AdaGrad(learning_rate=learning_rate, clip=5),
-          epochs
+          AdaGrad(learning_rate = learning_rate, clip = 5.0),
+          epochs,
+          seq_length
         )
-        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[0].elements[1].W.get(),Wxh)
-        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[1].elements[1].W.get(),Whh)
-        assert_array_equal(vantr2.statenet[0].net.elements[0].elements[2].W.get(),bh.T[0])
-        assert_array_equal(vantr2.outputnet[0].net.elements[0].elements[1].W.get(),Why)
-        assert_array_equal(vantr2.outputnet[0].net.elements[1].W.get(),by.T[0])
+        assert_array_equal(van.net.Wxh.net.W.get(),Wxh)
+        assert_array_equal(van.net.Whh.net.W.get(),Whh)
+        assert_array_equal(van.net.Why.net.W.get(),Why)
+        assert_array_equal(van.net.bh.net.W.get(),bh.T[0])
+        assert_array_equal(van.net.by.net.W.get(),by.T[0])
+        # van.on_message('init_nodes', seq_length)
+        # assert_array_equal(van.net.Wxh.net.W.get(),Wxh)
+        # assert_array_equal(van.net.Whh.net.W.get(),Whh)
+        # assert_array_equal(van.net.Why.net.W.get(),Why)
+        # assert_array_equal(van.net.bh.net.W.get(),bh.T[0])
+        # assert_array_equal(van.net.by.net.W.get(),by.T[0])
 
         txtvan = ''
         x = to_one_hot_vect(inputs[0],vocab_size)
         for i in range(200):
-            y = soft.forward(vantr2.forward(x))
+            y = soft.forward(van.forward(x))
             txtvan += ix_to_char[np.argmax(y)]#np.random.choice(range(vocab_size), p=y.ravel())]
             x = to_one_hot_vect(np.argmax(y),vocab_size)
-        vantr2.clear_memory()
+        van.on_message('clear_memory')
 
         sample_ix = sample(hprev, inputs[0], 200)
         txt = ''.join(ix_to_char[ix] for ix in sample_ix)

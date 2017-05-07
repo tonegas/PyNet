@@ -1,5 +1,5 @@
 import numpy as np
-from standart_network.vanilla import Vanilla
+from standart_network.vanilla import Vanilla, VanillaNet
 from layers import SoftMaxLayer
 from trainer import Trainer
 from losses import CrossEntropyLoss, NegativeLogLikelihoodLoss
@@ -7,6 +7,7 @@ from optimizers import GradientDescent, GradientDescentMomentum, AdaGrad
 from utils import to_one_hot_vect
 from printers import ShowTraining
 from genericlayer import GenericLayer
+from network import Sequential
 
 data = open('input.txt', 'r').read() # should be simple plain text file
 chars = list(set(data))
@@ -25,7 +26,7 @@ Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
 bh = np.zeros((hidden_size, 1)) # hidden bias
 by = np.zeros((vocab_size, 1)) # output bias
 
-load = 1
+load = 0
 if load:
     v = GenericLayer.load_or_create(
         'vanilla.net',
@@ -39,14 +40,33 @@ if load:
         )
     )
 else:
-    v = Vanilla(
-          vocab_size,vocab_size,hidden_size,window_size,
-          Wxh = Wxh,
-          Whh = Whh,
-          Why = Why,
-          bh = bh,
-          by = by
-        )
+    v = VanillaNet(
+              vocab_size, vocab_size, hidden_size,
+              Wxh = Wxh,
+              Whh = Whh,
+              Why = Why,
+              bh = bh,
+              by = by
+            )
+    # v.on_message('init_nodes', window_size)
+    # Sequential(
+    #         Vanilla(
+    #           vocab_size,vocab_size,hidden_size,window_size#,
+    #           # Wxh = Wxh,
+    #           # Whh = Whh,
+    #           # Why = Why,
+    #           # bh = bh,
+    #           # by = by
+    #         ),
+    #         Vanilla(
+    #           vocab_size,vocab_size,hidden_size,window_size#,
+    #           # Wxh = Wxh,
+    #           # Whh = Whh,
+    #           # Why = Why,
+    #           # bh = bh,
+    #           # by = by
+    #         )
+    # )
 
 sm = SoftMaxLayer()
 
@@ -57,9 +77,9 @@ sm = SoftMaxLayer()
 
 epochs = 50
 
-display = ShowTraining(epochs)
+display = ShowTraining(epochs_num = epochs)#, weights_list = {'Wx':v.Wxh,'Whh':v.Whh,'Why':v.Why,'by':v.by,'bh':v.bh})
 
-trainer = Trainer(show_training = True, show_function=display.show)
+trainer = Trainer(show_training = True, show_function = display.show)
 
 train = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[0:-1]]
 target = [to_one_hot_vect(char_to_ix[ch],vocab_size) for ch in data[1:]]
@@ -90,8 +110,9 @@ while True:
         # NegativeLogLikelihoodLoss(),
         # GradientDescent(learning_rate=0.01),
         # GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
-        AdaGrad(learning_rate=0.1,clip=100.0),
-        epochs
+        AdaGrad(learning_rate=0.7),#,clip=100.0),
+        epochs,
+        window_size
     )
     v.save('vanilla.net')
 

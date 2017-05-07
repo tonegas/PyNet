@@ -8,8 +8,9 @@ class Optimizer(object):
     def update_dW(self, weight, dJdW):
         weight.dW += dJdW
         self.weight_list[weight.W.ctypes.data] = weight
+        # print self.weight_list
 
-    def update_W(self, layer):
+    def update_W(self, weight):
         pass
 
     def update_model(self):

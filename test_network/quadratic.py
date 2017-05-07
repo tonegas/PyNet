@@ -69,39 +69,48 @@ from printers import ShowTraining
 #         )
 #     )
 
+epochs = 100
+
 #equal to
 varx = Input('x','x')
-a = VWeight(1,L1=0.0,L2=0.05,weights=np.array([10.0]))
-b = VWeight(1,L2=0.0,weights=np.array([10.0]))
-c = VWeight(1,L2=0.0,weights=np.array([10.0]))
+a = VWeight(1,L2=0.001,weights=np.array([10.0]))
+b = VWeight(1,L2=0.001,weights=np.array([10.0]))
+c = VWeight(1,L2=0.001,weights=np.array([10.0]))
+# a = VWeight(1,weights=np.array([10.0]))
+# b = VWeight(1,weights=np.array([10.0]))
+# c = VWeight(1,weights=np.array([10.0]))
 # x = Input(lv,'x')
 n = ComputationalGraphLayer(a*varx**2+b*varx+c)
 
 #
 train = []
-for i,x in enumerate(np.linspace(-0.5,0.5,50)):
+for i,x in enumerate(np.linspace(-0.2,0.2,50)):
     train.append((np.array([x]),np.array([5.2*x+7.1])))
+
+test = []
+for i,x in enumerate(np.linspace(-10,10,50)):
+    test.append((np.array([x]),np.array([5.2*x+7.1])))
+
 # print (train[0][0],train[0][1])
 # print n.forward(train[0][0])
 # print n.numeric_gradient(train[0][0])
 # print n.backward(np.array([1.0]))
 
-printer = ShowTraining(epochs_num = 20, weights_list={'a':a.net.W,'b':b.net.W,'c':c.net.W})
-t = Trainer(show_training = True,show_function = printer.show)
+printer = ShowTraining(epochs_num = epochs, weights_list={'a':a.net.W,'b':b.net.W,'c':c.net.W})
+t = Trainer(show_training = True, show_function = printer.show)
 
 #
-J_list, dJdy_list = t.learn(
+J_list, dJdy_list, J_test_list = t.learn(
     model = n,
     train = train,
+    test = test,
     loss = SquaredLoss(),
-    #optimizer = GradientDescentMomentum(learning_rate=0.15,momentum=0.5),
-    optimizer = AdaGrad(learning_rate=0.6),
-    epochs = 20
+    optimizer = GradientDescentMomentum(learning_rate=0.9,momentum=0.5),
+    # batch_size = len(train),
+    # optimizer = AdaGrad(learning_rate=0.6),
+    epochs = epochs
 )
 
-test = []
-for i,x in enumerate(np.linspace(-10,10,50)):
-    test.append((np.array([x]),np.array([5.2*x+7.1])))
 #
 plt.figure(4)
 plt.title('Errors History (J)')

@@ -12,10 +12,10 @@ class LinearLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        if isinstance(weights,utils.SharedWeights):
-            self.W = weights
-        else:
-            self.W = utils.SharedWeights(weights, input_size + 1, output_size)
+        # if isinstance(weights,utils.SharedWeights):
+        #     self.W = weights
+        # else:
+        self.W = utils.SharedWeights(weights, input_size + 1, output_size)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
@@ -37,10 +37,10 @@ class MWeightLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        if isinstance(weights,utils.SharedWeights):
-            self.W = weights
-        else:
-            self.W = utils.SharedWeights(weights, input_size, output_size)
+        # if isinstance(weights,utils.SharedWeights):
+        #     self.W = weights
+        # else:
+        self.W = utils.SharedWeights(weights, input_size, output_size)
 
     def forward(self, x, update = False):
         self.x = x
@@ -53,9 +53,7 @@ class MWeightLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        # print np.dot(np.matrix(dJdy).T,np.matrix(self.x))
-        #dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W) + self.L2 * self.W
-        dJdW = np.dot(np.matrix(dJdy).T,np.matrix(self.x))
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
         return dJdW
 
 class VWeightLayer(GenericLayer):
@@ -63,10 +61,10 @@ class VWeightLayer(GenericLayer):
         self.L1 = L1
         self.L2 = L2
         self.size = size
-        if isinstance(weights,utils.SharedWeights):
-            self.W = weights
-        else:
-            self.W = utils.SharedWeights(weights, 1, size)
+        # if isinstance(weights,utils.SharedWeights):
+        #     self.W = weights
+        # else:
+        self.W = utils.SharedWeights(weights, 1, size)
 
     def forward(self, x, update = False):
         self.x = x

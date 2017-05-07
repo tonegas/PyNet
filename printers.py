@@ -24,12 +24,12 @@ class ShowTraining():
         if epochs_num is not None:
             self.ax2.set_xlim([0,epochs_num])
 
+        self.weightsline = []
+        self.weights = []
         if weights_list is not None:
             self.fig3 = plt.figure(3)
             self.ax3 = self.fig3.add_subplot(111)
             self.ax3.set_title('Weights Norm2')
-            self.weightsline = []
-            self.weights = []
             for weight in weights_list:
                 self.weights.append(weights_list[weight])
                 line, = self.ax3.plot(xrange(len([])), [],  marker='o', label=weight)
@@ -61,6 +61,8 @@ class ShowTraining():
             minval = 0
             maxval = 0
             for weight,weightline in zip(self.weights,self.weightsline):
+                if epoch == 0:
+                    weightline.set_ydata([])
                 weightline.set_xdata(xrange(len(dJdy_list[:epoch+1])))
                 weightline.set_ydata(np.append(weightline.get_ydata(),np.linalg.norm(weight.get())))
                 minval = minval if minval < min(weightline.get_ydata()) else min(weightline.get_ydata())

@@ -143,3 +143,5 @@ plt.figure(11)
 # plt.title('After Training')
 
 raw_input('Press ENTER to exit')
+
+

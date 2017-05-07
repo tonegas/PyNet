@@ -35,6 +35,9 @@ class GenericLayer(StoreNetwork):
             dJdx[:,r] = (fxdx-fx)/dx
         return dJdx
 
+    def on_message(self, message, *args, **kwargs):
+        pass
+
     def forward(self, x, update = False):
         return x
 
@@ -56,3 +59,9 @@ class WithElements:
 
         self.elements.append(element)
         return self
+
+    def on_message(self, message, *args, **kwargs):
+        for element in self.elements:
+            op = getattr(element, "on_message", None)
+            if callable(op):
+                element.on_message(message,*args,**kwargs)

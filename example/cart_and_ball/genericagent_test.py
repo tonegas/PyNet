@@ -40,7 +40,7 @@ from qlearning import GenericAgent
 from network import Sequential
 from layers import SoftMaxLayer, LinearLayer, TanhLayer, NormalizationLayer, RandomGaussianLayer
 
-interval = 0
+interval = 1
 load = 1
 
 if load == 1:
@@ -50,32 +50,32 @@ if load == 1:
     # p.print_model(2,agent.net,np.array([[0,0],[5.0,5.0]]))
     # plt.show()
 else:
-    norm = NormalizationLayer(
-        np.array([0.0,0.0,0.0,-3.0,-3.0]),
-        np.array([5.0,5.0,5.0,3.0,3.0]),
-        np.array([-1.0,-1.0,-1.0,-1.0,-1.0]),
-        np.array([1.0,1.0,1.0,1.0,1.0])
-    )
+    # norm = NormalizationLayer(
+    #     np.array([0.0,0.0,0.0,-3.0,-3.0]),
+    #     np.array([5.0,5.0,5.0,3.0,3.0]),
+    #     np.array([-1.0,-1.0,-1.0,-1.0,-1.0]),
+    #     np.array([1.0,1.0,1.0,1.0,1.0])
+    # )
     # norm = NormalizationLayer(
     #     np.array([0.0,0.0,0.0,-3.0]),
     #     np.array([5.0,5.0,5.0,3.0]),
     #     np.array([-1.0,-1.0,-1.0,-1.0]),
     #     np.array([1.0,1.0,1.0,1.0])
     # )
-    # norm = NormalizationLayer(
-    #     np.array([0.0,0.0]),
-    #     np.array([5.0,5.0]),
-    #     np.array([-1.0,-1.0]),
-    #     np.array([1.0,1.0])
-    # )
+    norm = NormalizationLayer(
+        np.array([0.0,0.0]),
+        np.array([5.0,5.0]),
+        np.array([-1.0,-1.0]),
+        np.array([1.0,1.0])
+    )
 
     n = Sequential(
         norm,
-        LinearLayer(5,3,weights='gaussian'),
+        LinearLayer(2,3,weights='gaussian'),
         TanhLayer,
         # #AddGaussian(1),
         # LinearLayer(3,3,weights='gaussian'),
-        RandomGaussianLayer(10),
+        RandomGaussianLayer(1),
         SoftMaxLayer
     )
     agent = GenericAgent(n,3,20,5.0)
@@ -93,7 +93,7 @@ def data_gen(t=0):
         # print time
         ball.step(time_step, cart)
 
-        state = np.array([ball.p[0],cart.p[0],ball.p[1],ball.v[0],cart.v[0]])
+        state = np.array([ball.p[0],cart.p[0]])#,ball.p[1],ball.v[0],cart.v[0]])
         #print state
         if ball.lose == 0:
             if ball.catch:
@@ -135,7 +135,7 @@ def data_gen(t=0):
         if int(ind%1000) == 0:
             # print (agent.net.elements[0].W[0][3],agent.net.elements[0].W[1][3],agent.net.elements[0].W[2][3])
             #print agent.net.elements[1].W
-            print np.max(agent.model.elements[1].W)
+            # print np.max(agent.model.elements[1].W)
             agent.save('genericagent.net')
         yield (cart,ball)
 

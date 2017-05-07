@@ -197,6 +197,29 @@ class ComputationGraphTests(unittest.TestCase):
         dJdy2 = net.backward(np.array([1.0,1.0]))
         assert_almost_equal(dJdy,dJdy2)
 
+    def test_variable_sharedweights(self):
+        #test one layer W*x+b+W*y+b
+        list_var = ['x','y']
+        x = Input(list_var,'x')
+        y = Input(list_var,'y')
+        xv = np.array([1.5,1.1,7.5])
+        yv = np.array([0.2,0.4,0.5])
+        xyv = [xv,yv]
+
+        Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2],[2.2,5.2,4.2]])
+        W = MWeight(3, 3, weights = Wv)
+
+        net = ComputationalGraphLayer(W*(W*x+W*y))
+        out = net.forward(xyv)
+        self.assertEqual(out.shape,(3,))
+        assert_almost_equal(out,Wv.dot(Wv.dot(xv)+Wv.dot(yv)))
+        dJdy = net.backward(np.array([1.0,1.0,1.0]))
+        self.assertEqual(len(dJdy),2)
+        gradvett = [np.sum(Wv.dot(Wv),0),np.sum(Wv.dot(Wv),0)]
+        for ind,element in enumerate(dJdy):
+            self.assertEqual(element.shape,xyv[ind].shape)
+            assert_almost_equal(dJdy[ind],gradvett[ind])
+
     # def test_hstack(self):
     #     list_var = ['x','y']
     #     x = Input(list_var,'x')
