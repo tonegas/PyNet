@@ -12,10 +12,7 @@ class LinearLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        # if isinstance(weights,utils.SharedWeights):
-        #     self.W = weights
-        # else:
-        self.W = utils.SharedWeights(weights, input_size + 1, output_size)
+        self.W = utils.SharedWeights.get_or_create(weights, input_size + 1, output_size)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
@@ -37,10 +34,7 @@ class MWeightLayer(GenericLayer):
         self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        # if isinstance(weights,utils.SharedWeights):
-        #     self.W = weights
-        # else:
-        self.W = utils.SharedWeights(weights, input_size, output_size)
+        self.W = utils.SharedWeights.get_or_create(weights, input_size, output_size)
 
     def forward(self, x, update = False):
         self.x = x
@@ -61,10 +55,7 @@ class VWeightLayer(GenericLayer):
         self.L1 = L1
         self.L2 = L2
         self.size = size
-        # if isinstance(weights,utils.SharedWeights):
-        #     self.W = weights
-        # else:
-        self.W = utils.SharedWeights(weights, 1, size)
+        self.W = utils.SharedWeights.get_or_create(weights, 1, size)
 
     def forward(self, x, update = False):
         self.x = x
@@ -236,6 +227,20 @@ class SelectVariableLayer(GenericLayer):
             # print 'exit'
             return [dJdy if ind == self.ind else np.zeros(self.x[ind].shape) for ind,var in enumerate(self.variables)]
 
+class VariableDictLayer(GenericLayer):
+    def __init__(self, variables):
+        self.variables = variables
+
+    def forward(self, x_dict, update = False):
+        self.x = x_dict
+        return [self.x[var] for var in self.variables]
+
+    def backward(self, dJdy, optimizer = None):
+        dJdx = {}
+        for var,dJdvar in zip(self.variables,dJdy):
+            dJdx[var] = dJdvar
+        return dJdx
+
 class ConstantLayer(GenericLayer):
     def __init__(self, value):
         self.value = value
@@ -246,3 +251,12 @@ class ConstantLayer(GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         return np.zeros(self.x.shape)
+
+class ConcatLayer(GenericLayer):
+    def forward(self, x, update = False):
+        self.x = x
+        return np.hstack(x)
+
+    def backward(self, dJdy, optimizer = None):
+        inds = np.cumsum(len,self.x)
+        return np.split(dJdy,inds)[:-1]

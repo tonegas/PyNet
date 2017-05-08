@@ -1,11 +1,12 @@
 import numpy as np
 
 import layers
+from groupnetworks import MapGroup
 from network import  Sequential, SequentialMul, SequentialSum, SequentialNegative
 from genericlayer import GenericLayer, WithElements
 
 class Op(object):
-    def __init__(self,net):
+    def __init__(self, net):
         self.net = net
 
     def __sub__(self, other):
@@ -32,9 +33,14 @@ class Op(object):
         return Op(SequentialMul(*[self.get() for i in range(other)]))
 
     def __mul__(self, other):
+        if isinstance(self, MWeight):
+            return Op(Sequential(other.get(),self.get()))
+
         if isinstance(other, Input) or isinstance(other, Op):
             if isinstance(self.net, SequentialMul):
                 return Op(self.net.add(other.get()))
+            if isinstance(self.net, Sequential):
+                return Op(Sequential(other.get(),self.get()))
             return Op(SequentialMul(self.get(),other.get()))
 
         elif isinstance(other, int) or isinstance(other, float):
@@ -45,9 +51,17 @@ class Op(object):
         else:
             raise Exception('Type is not supported!')
 
+    def addSequential(self, net):
+        if isinstance(self.get(),Sequential):
+            self.net = self.get().add(net)
+        else:
+            self.net = Sequential(
+                    self.get(),
+                    net
+                )
+
     def get(self):
         return self.net
-
 
 class VWeight(Op):
     def __init__(self, *args, **kwargs):
@@ -55,45 +69,28 @@ class VWeight(Op):
 
 class MWeight(Op):
     def __init__(self, *args, **kwargs):
-        self.a = args
-        self.b = kwargs
         super(MWeight,self).__init__(layers.MWeightLayer(*args, **kwargs))
 
-    def __mul__(self, other):
-        o = MWeight(*self.a, **self.b)
-        o.net = Sequential(
-            other.get(),
-            self.get()
-        )
-        return o
-
 class Input(Op):
-    def __init__(self, dict_variables, variable):
-        super(Input,self).__init__(layers.SelectVariableLayer(dict_variables, variable))
+    def __init__(self, variables_list, variable):
+        super(Input,self).__init__(layers.SelectVariableLayer(variables_list, variable))
 
 class Sigmoid(Op):
     def __init__(self, operation):
-        super(Sigmoid,self).__init__(
-            Sequential(
-                operation.get(),
-                layers.SigmoidLayer
-            )
-        )
+        super(Sigmoid,self).__init__(operation.get())
+        self.addSequential(layers.SigmoidLayer)
 
 class Tanh(Op):
     def __init__(self, operation):
-        super(Tanh,self).__init__(
-            Sequential(
-                operation.get(),
-                layers.TanhLayer
-            )
-        )
+        super(Tanh,self).__init__(operation.get())
+        self.addSequential(layers.TanhLayer)
 
 class Softmax(Op):
     def __init__(self, operation):
-        super(Softmax,self).__init__(
-            Sequential(
-                operation.get(),
-                layers.SoftMaxLayer
-            )
-        )
+        super(Softmax,self).__init__(operation.get())
+        self.addSequential(layers.SoftMaxLayer)
+
+class Concat(Op):
+    def __init__(self, operation_list):
+        super(Concat,self).__init__(MapGroup([operation.get() for operation in operation_list]))
+        self.addSequential(layers.ConcatLayer())

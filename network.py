@@ -2,7 +2,6 @@ import numpy as np
 from itertools import izip
 from genericlayer import GenericLayer, WithElements, WithNet
 
-
 class Sequential(GenericLayer, WithElements):
     def __init__(self, *args):
         WithElements.__init__(self, *args)
@@ -88,3 +87,4 @@ class SequentialNegative(WithNet):
 
     def backward(self, dJdy, optimizer = None):
         return -np.array(self.net.backward(dJdy, optimizer))
+

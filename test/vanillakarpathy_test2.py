@@ -27,7 +27,7 @@ ix_to_char = { i:ch for i,ch in enumerate(chars) }
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
-epochs = 10
+epochs = 5
 
 # model parameters
 Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
@@ -137,7 +137,7 @@ class VanillaTests(unittest.TestCase):
           van,
           zip(to_hot_vect(inputs_all,vocab_size),to_hot_vect(targets_all,vocab_size)),
           CrossEntropyLoss(),
-          AdaGrad(learning_rate = learning_rate, clip = 5.0),
+          opt,
           epochs,
           seq_length
         )
@@ -146,12 +146,6 @@ class VanillaTests(unittest.TestCase):
         assert_array_equal(van.net.Why.net.W.get(),Why)
         assert_array_equal(van.net.bh.net.W.get(),bh.T[0])
         assert_array_equal(van.net.by.net.W.get(),by.T[0])
-        # van.on_message('init_nodes', seq_length)
-        # assert_array_equal(van.net.Wxh.net.W.get(),Wxh)
-        # assert_array_equal(van.net.Whh.net.W.get(),Whh)
-        # assert_array_equal(van.net.Why.net.W.get(),Why)
-        # assert_array_equal(van.net.bh.net.W.get(),bh.T[0])
-        # assert_array_equal(van.net.by.net.W.get(),by.T[0])
 
         txtvan = ''
         x = to_one_hot_vect(inputs[0],vocab_size)

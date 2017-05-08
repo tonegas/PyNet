@@ -3,18 +3,25 @@ import numpy as np
 class Optimizer(object):
     def __init__(self, clip=None):
         self.weight_list = {}
+        self.weight_params = {}
         self.clip = clip
 
     def update_dW(self, weight, dJdW):
         weight.dW += dJdW
         self.weight_list[weight.W.ctypes.data] = weight
-        # print self.weight_list
 
     def update_W(self, weight):
         pass
 
+    def get_or_create_param(self, weight, param_id, param_init_val = 0.0):
+        if weight.W.ctypes.data not in  self.weight_params:
+            self.weight_params[weight.W.ctypes.data] = {}
+        return self.weight_params[weight.W.ctypes.data].get(param_id, param_init_val)
+
+    def set_param(self, weight, param_id, param_val):
+        self.weight_params[weight.W.ctypes.data][param_id] = param_val
+
     def update_model(self):
-        # print self.weight_list
         for weight in self.weight_list:
             if self.clip is not None:
                 np.clip(self.weight_list[weight].dW, -self.clip, self.clip, out=self.weight_list[weight].dW)
@@ -36,11 +43,9 @@ class GradientDescentMomentum(Optimizer):
         self.momentum = momentum
 
     def update_W(self, weight):
-        if not hasattr(weight,'velocity'):
-            weight.velocity = 0
-        weight.velocity = (self.momentum*weight.velocity)-(self.learning_rate*weight.dW)
-
-        weight.W += weight.velocity
+        velocity = (self.momentum*self.get_or_create_param(weight,'velocity')) - (self.learning_rate*weight.dW)
+        self.set_param(weight, 'velocity', velocity)
+        weight.W += velocity
         weight.dW.fill(0.0)
 
 class AdaGrad(Optimizer):
@@ -50,11 +55,10 @@ class AdaGrad(Optimizer):
         self.delta = 1e-8
 
     def update_W(self, weight):
-        if not hasattr(weight, 'memory'):
-            weight.memory = 0
-        weight.memory += np.multiply(weight.dW, weight.dW)
+        r = self.get_or_create_param(weight, 'r') + np.multiply(weight.dW, weight.dW)
+        self.set_param(weight, 'r', r)
 
-        weight.W += -(self.learning_rate * weight.dW) / np.sqrt(weight.memory + self.delta)
+        weight.W += -(self.learning_rate * weight.dW) / np.sqrt(r + self.delta)
         weight.dW.fill(0.0)
 
 class RmsProp():

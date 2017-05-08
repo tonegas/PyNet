@@ -36,6 +36,7 @@ class RNN(GenericLayer, NodeGenerator):
     def init_nodes(self, window_size):
         self.window_size = window_size
         self.window_step = 0
+        self.nodes = []
         for ind in range(window_size):
             #self.nodes[ind].robba()
             self.nodes.append(self.node(*self.args, **self.kwargs))
@@ -103,11 +104,13 @@ class VanillaNode(GenericLayer):
         self.state = self.statenet.forward(x_h)
         self.y = self.outputnet.forward(self.state)
         return [self.y,self.state]
+        pass
 
     def backward(self, dJdy_dJdh, optimizer = None):
         dJds = self.outputnet.backward(dJdy_dJdh[0], optimizer)
         dJdx_dstate = self.statenet.backward(dJds+dJdy_dJdh[1], optimizer)
         return dJdx_dstate
+        pass
 
 class Vanilla(GenericLayer):
     def __init__(self, input_size, output_size, memory_size, window_size, Wxh='gaussian', Whh='gaussian', Why='gaussian', bh='zeros', by='zeros'):

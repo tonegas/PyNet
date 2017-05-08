@@ -27,13 +27,26 @@ class GenericLayer(StoreNetwork):
     def numeric_gradient(self,x):
         dx = 0.00000001
         fx = self.forward(x)
-        dJdx = np.zeros([fx.size,x.size])
-        for r in xrange(x.size):
-            dxvett = np.zeros(x.size)
-            dxvett[r] = dx
-            fxdx = self.forward(x+dxvett)
-            dJdx[:,r] = (fxdx-fx)/dx
-        return dJdx
+        if type(x) is list:
+            dJdx = []
+            for ind,element in enumerate(x):
+                dJdx.append(np.zeros([fx.size,element.size]))
+                for r in xrange(element.size):
+                    dxvett = np.zeros(element.size)
+                    dxvett[r] = dx
+                    xin = [el.copy() for el in x]
+                    xin[ind] = xin[ind]+dxvett
+                    fxdx = self.forward(xin)
+                    dJdx[ind][:,r] = (fxdx-fx)/dx
+            return dJdx
+        else:
+            dJdx = np.zeros([fx.size,x.size])
+            for r in xrange(x.size):
+                dxvett = np.zeros(x.size)
+                dxvett[r] = dx
+                fxdx = self.forward(x+dxvett)
+                dJdx[:,r] = (fxdx-fx)/dx
+            return dJdx
 
     def on_message(self, message, *args, **kwargs):
         pass
@@ -52,7 +65,7 @@ class GenericLayer(StoreNetwork):
         return strlab
 
     def __str__(self):
-        return self.printlayer(0)
+        return self.printlayer(1)
 
 class WithNet(GenericLayer):
     def __init__(self, net):
@@ -65,7 +78,14 @@ class WithNet(GenericLayer):
         return self.net.backward(dJdy, optimizer)
 
     def printelements(self,level):
-        return self.net.printelements(level+1)
+        strlab = '(\n'
+        for l in range(level):
+            strlab += '\t'
+        strlab += self.net.printlayer(level+1)+'\n'
+        for l in range(level-1):
+            strlab += '\t'
+        strlab += ')'
+        return strlab
 
 class WithElements:
     def __init__(self, *args):

@@ -2,13 +2,14 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-from computationalgraph import Input, VWeight, MWeight, Sigmoid
-from layers import ComputationalGraphLayer
+from computationalgraph import Input, VWeight, MWeight, Sigmoid, Tanh, Concat
+from layers import ComputationalGraphLayer, VariableDictLayer
 
 from layers import  SigmoidLayer, LinearLayer
 from network import  Sequential
 
-
+def sigmoid(x):
+    return 1.0/(1.0+np.exp(-x))
 
 class ComputationGraphTests(unittest.TestCase):
     def test_one_input(self):
@@ -94,7 +95,7 @@ class ComputationGraphTests(unittest.TestCase):
         pass
 
     def test_variable_matrixweight_one_input(self):
-        #function W*x vettoriale
+        # function W*x vettoriale
         xv = np.array([1.3,1.1,7.5])
         x = Input(['x'],'x')
         Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
@@ -196,6 +197,59 @@ class ComputationGraphTests(unittest.TestCase):
         assert_almost_equal(out,out2)
         dJdy2 = net.backward(np.array([1.0,1.0]))
         assert_almost_equal(dJdy,dJdy2)
+
+    def test_variable_dict(self):
+        xv = np.array([0.5,0.1,0.5])
+        yv = np.array([0.2,0.4,0.5])
+        valin = ['x','y']
+        x = Input(valin,'x')
+        y = Input(valin,'y')
+        xyv = [xv,yv]
+        Wxv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2],[2.2,5.2,4.2]])
+        Wyv = np.array([[2.1,2.1,2.2],[1.6,1.2,6.2],[2.1,3.1,2.2]])
+        Wx = MWeight(3, 3, weights = Wxv)
+        Wy = MWeight(3, 3, weights = Wyv)
+
+        net = ComputationalGraphLayer(Sigmoid(Wx*x)+Tanh(Wy*y))
+        netDict = Sequential(
+            VariableDictLayer(valin),
+            net
+        )
+        out = net.forward(xyv)
+        self.assertEqual(out.shape,(3,))
+        assert_almost_equal(out,sigmoid(Wxv.dot(xv))+np.tanh(Wyv.dot(yv)))
+        dJdy = net.backward(np.array([1.0,1.0,1.0]))
+
+        self.assertEqual(len(dJdy),2)
+        for ind,key in enumerate(dJdy):
+            self.assertEqual(dJdy[ind].shape,xyv[ind].shape)
+            assert_almost_equal(dJdy[ind],np.sum(net.numeric_gradient(xyv)[ind],0))
+
+        auxdict = {'x':0,'y':1}
+        out = netDict.forward({'x':xv,'y':yv})
+        self.assertEqual(out.shape,(3,))
+        assert_almost_equal(out,sigmoid(Wxv.dot(xv))+np.tanh(Wyv.dot(yv)))
+        dJdy = netDict.backward(np.array([1.0,1.0,1.0]))
+        self.assertEqual(len(dJdy),2)
+        for key in dJdy:
+            self.assertEqual(dJdy[key].shape,xyv[auxdict[key]].shape)
+            assert_almost_equal(dJdy[key],np.sum(net.numeric_gradient(xyv)[auxdict[key]],0))
+
+    def test_concat(self):
+        xv = np.array([0.5,0.1,0.5])
+        yv = np.array([0.2,0.4,0.5,7.0])
+        valin = ['x','y']
+        x = Input(valin,'x')
+        y = Input(valin,'y')
+        xyv = [xv,yv]
+        Wxv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2],[2.2,5.2,4.2]])
+        Wx = MWeight(3, 3, weights = Wxv)
+
+        net = ComputationalGraphLayer(Concat([Wx*x,y]))
+        print net
+        out = net.forward(xyv)
+        print out
+
 
     def test_variable_sharedweights(self):
         #test one layer W*x+b+W*y+b

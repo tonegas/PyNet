@@ -41,7 +41,7 @@ class Trainer():
         train_vect = np.split(train,range(window_size,train_num,window_size))
         batches_num = len(train_vect)
 
-        # model.on_message('init_nodes', window_size)
+        model.on_message('init_nodes', window_size)
 
         for epoch in range(epochs):
             for batch in train_vect:

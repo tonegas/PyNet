@@ -43,10 +43,7 @@ def define_weights(weights, input_size = None, output_size = None):
 
 class SharedWeights():
     def __init__(self, weights = 'gaussian', input_size = None, output_size = None):
-        if isinstance(weights,SharedWeights):
-            self.W = weights.W
-            self.dW = weights.dW
-        elif type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
+        if type(weights) == np.ndarray or type(weights) == np.matrixlib.defmatrix.matrix:
             self.W = define_weights(weights)
             self.dW = np.zeros_like(self.W)
         elif input_size is not None and output_size is not None:
@@ -54,6 +51,13 @@ class SharedWeights():
             self.dW = np.zeros_like(self.W)
         else:
             raise Exception('Type not correct!')
+
+    @staticmethod
+    def get_or_create(weights, input_size = None, output_size = None):
+        if isinstance(weights, SharedWeights):
+            return weights
+        else:
+            return SharedWeights(weights, input_size, output_size)
 
     def T(self):
         out = SharedWeights(self)

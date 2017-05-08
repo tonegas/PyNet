@@ -80,3 +80,4 @@ class LSTMNode(GenericLayer):
 
         dJdx = self.ct_net.backward(dJdx_group[0], optimizer)
         return dJdx
+
