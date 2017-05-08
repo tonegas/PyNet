@@ -1,5 +1,5 @@
 import numpy as np
-from genericlayer import GenericLayer
+from genericlayer import GenericLayer, WithNet
 import utils
 
 
@@ -205,15 +205,9 @@ class RandomGaussianLayer(GenericLayer):
 #############################################################################################
 ############################### Layer for Computational Graph ###############################
 
-class ComputationalGraphLayer(GenericLayer):
+class ComputationalGraphLayer(WithNet):
     def __init__(self, operation):
-        self.net = operation.get()
-
-    def forward(self, x, update = False):
-        return self.net.forward(x, update)
-
-    def backward(self, dJdy, optimizer = None):
-        return self.net.backward(dJdy, optimizer)
+        WithNet.__init__(self,operation.get())
 
 class SelectVariableLayer(GenericLayer):
     def __init__(self, variables, variable):

@@ -44,6 +44,29 @@ class GenericLayer(StoreNetwork):
     def backward(self, dJdy, optimizer = None):
         return dJdy
 
+    def printlayer(self, level):
+        strlab = self.__class__.__name__
+        if hasattr(self,'printelements'):
+            strlab += self.printelements(level)
+
+        return strlab
+
+    def __str__(self):
+        return self.printlayer(0)
+
+class WithNet(GenericLayer):
+    def __init__(self, net):
+        self.net = net
+
+    def forward(self, x, update = False):
+        return self.net.forward(x, update)
+
+    def backward(self, dJdy, optimizer = None):
+        return self.net.backward(dJdy, optimizer)
+
+    def printelements(self,level):
+        return self.net.printelements(level+1)
+
 class WithElements:
     def __init__(self, *args):
         self.elements = []
@@ -65,3 +88,21 @@ class WithElements:
             op = getattr(element, "on_message", None)
             if callable(op):
                 element.on_message(message,*args,**kwargs)
+
+    def printelements(self,level):
+        strlab = '(\n'
+        for element in self.elements:
+            for l in range(level):
+                strlab += '\t'
+            strlab += element.printlayer(level+1)+'\n'
+        for l in range(level-1):
+            strlab += '\t'
+        strlab += ')'
+        return strlab
+
+    # def __str__(self):
+    #     strlab = self.__class__.__name__+'(\n'
+    #     for element in self.elements:
+    #         strlab+='\t'+str(element)+'\n'
+    #     strlab+=')'
+    #     return strlab

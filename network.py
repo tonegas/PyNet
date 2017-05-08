@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import izip
-from genericlayer import GenericLayer, WithElements
+from genericlayer import GenericLayer, WithElements, WithNet
 
 
 class Sequential(GenericLayer, WithElements):
@@ -82,10 +82,7 @@ class SequentialMul(GenericLayer, WithElements):
             aux_dJdx.append(element.backward(dJdx, optimizer))
         return np.sum(np.array(aux_dJdx),0)
 
-class SequentialNegative(GenericLayer):
-    def __init__(self, net):
-        self.net = net
-
+class SequentialNegative(WithNet):
     def forward(self, x, update = False):
         return -np.array(self.net.forward(x, update))
 
