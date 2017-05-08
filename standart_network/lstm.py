@@ -37,8 +37,9 @@ class LSTMNode(GenericLayer):
     def __init__(self, input_size, output_size, Wi='gaussian', Wf='gaussian', Wc='gaussian', Wo='gaussian', bf='zeros', bi='zeros', bc='zeros', bo='zeros'):
         self.input_size = input_size
         self.output_size = output_size
-        vars = ['xh','c']
-        xh = Input(vars,'xh')
+        vars = ['x','h','c']
+        x = Input(vars,'x')
+        h = Input(vars,'h')
         c = Input(vars,'c')
         Wi = MWeight(input_size+output_size, output_size, weights = Wi)
         Wf = MWeight(input_size+output_size, output_size, weights = Wf)
@@ -48,9 +49,12 @@ class LSTMNode(GenericLayer):
         bc = VWeight(output_size, weights = bc)
         Wo = MWeight(input_size+output_size, output_size, weights = Wo)
         bo = VWeight(output_size, weights = bo)
-        self.ct_net = ComputationalGraphLayer(
-            Sigmoid(Wf*xh+bf)*c+
-            Sigmoid(Wi*xh+bi)*Tanh(Wc*xh+bc)
+        self.ct_net = Sequential(
+            VariableDictLayer()
+            ComputationalGraphLayer(
+                Sigmoid(Wf*xh+bf)*c+
+                Sigmoid(Wi*xh+bi)*Tanh(Wc*xh+bc)
+            )
         )
         self.ht_net = ComputationalGraphLayer(
             Tanh(c)*(Wo*xh+bo)

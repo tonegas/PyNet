@@ -258,5 +258,5 @@ class ConcatLayer(GenericLayer):
         return np.hstack(x)
 
     def backward(self, dJdy, optimizer = None):
-        inds = np.cumsum(len,self.x)
+        inds = np.cumsum(map(len,self.x))
         return np.split(dJdy,inds)[:-1]

@@ -248,8 +248,14 @@ class ComputationGraphTests(unittest.TestCase):
         net = ComputationalGraphLayer(Concat([Wx*x,y]))
         print net
         out = net.forward(xyv)
-        print out
-
+        self.assertEqual(out.shape,(7,))
+        dJdy = net.backward(np.array([1.0,1.0,1.0,1.0,1.0,1.0,1.0]))
+        print dJdy
+        self.assertEqual(len(dJdy),2)
+        gradvett = [np.sum(Wxv,0),np.array([1.0,1.0,1.0,1.0])]
+        for ind,element in enumerate(dJdy):
+            self.assertEqual(element.shape,xyv[ind].shape)
+            assert_almost_equal(dJdy[ind],gradvett[ind])
 
     def test_variable_sharedweights(self):
         #test one layer W*x+b+W*y+b

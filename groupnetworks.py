@@ -43,16 +43,3 @@ class ParallelGroup(GenericLayer, WithElements):
         for (dJdy, element) in izip(dJdy_group, self.elements):
             aux_dJdx.append(element.backward(dJdy, optimizer))
         return np.sum(np.array(aux_dJdx),0)
-
-class MapGroup(GenericLayer, WithElements):
-    def forward(self, x_group, update = False):
-        y_group = []
-        for (x, element) in zip(x_group, self.elements):
-            y_group.append(element.forward(x, update))
-        return y_group
-
-    def backward(self, dJdy_group, optimizer = None):
-        aux_dJdx = []
-        for (dJdy, element) in izip(dJdy_group, self.elements):
-            aux_dJdx.append(element.backward(dJdy, optimizer))
-        return aux_dJdx

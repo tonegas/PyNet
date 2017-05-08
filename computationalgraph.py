@@ -1,7 +1,7 @@
 import numpy as np
 
 import layers
-from groupnetworks import MapGroup
+from groupnetworks import ParallelGroup
 from network import  Sequential, SequentialMul, SequentialSum, SequentialNegative
 from genericlayer import GenericLayer, WithElements
 
@@ -92,5 +92,5 @@ class Softmax(Op):
 
 class Concat(Op):
     def __init__(self, operation_list):
-        super(Concat,self).__init__(MapGroup([operation.get() for operation in operation_list]))
+        super(Concat,self).__init__(ParallelGroup([operation.get() for operation in operation_list]))
         self.addSequential(layers.ConcatLayer())
