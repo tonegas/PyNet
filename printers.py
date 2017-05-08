@@ -38,6 +38,7 @@ class ShowTraining():
             self.ax3.set_ylabel(r'$||W_i||_2$')
             if epochs_num is not None:
                 self.ax3.set_xlim([0,epochs_num])
+        self.ax3.legend()
         plt.ioff()
 
     def show(self, epoch, J_train_list, dJdy_list = None, J_test_list = None):

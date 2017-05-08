@@ -2,7 +2,7 @@ import numpy as np
 from itertools import izip
 from genericlayer import GenericLayer, WithElements, WithNet
 
-class Sequential(GenericLayer, WithElements):
+class Sequential(WithElements, GenericLayer):
     def __init__(self, *args):
         WithElements.__init__(self, *args)
 
@@ -18,7 +18,7 @@ class Sequential(GenericLayer, WithElements):
             aux_dJdx = layer.backward(aux_dJdx, optimizer)
         return aux_dJdx
 
-class Parallel(GenericLayer, WithElements):
+class Parallel(WithElements, GenericLayer):
     def __init__(self, *args):
         self.vect_size = []
         WithElements.__init__(self, *args)
@@ -41,7 +41,7 @@ class Parallel(GenericLayer, WithElements):
         return np.sum(np.array(aux_dJdx),0)
 
 
-class SequentialSum(GenericLayer, WithElements):
+class SequentialSum(WithElements, GenericLayer):
     def __init__(self, *args):
         self.vect_size = []
         WithElements.__init__(self, *args)
@@ -59,7 +59,7 @@ class SequentialSum(GenericLayer, WithElements):
             aux_dJdx.append(element.backward(np.ones(x.size)*dJdy, optimizer))
         return np.sum(np.array(aux_dJdx),0)
 
-class SequentialMul(GenericLayer, WithElements):
+class SequentialMul(WithElements, GenericLayer):
     def __init__(self, *args):
         self.vect_size = []
         WithElements.__init__(self, *args)

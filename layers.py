@@ -8,11 +8,9 @@ import utils
 
 class LinearLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
-        self.L1 = L1
-        self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.W = utils.SharedWeights.get_or_create(weights, input_size + 1, output_size)
+        self.W = utils.SharedWeights.get_or_create(weights, input_size + 1, output_size, L1, L2)
 
     def forward(self, x, update = False):
         self.x = np.hstack([x, 1])
@@ -25,16 +23,14 @@ class LinearLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T
         return dJdW
 
 class MWeightLayer(GenericLayer):
     def __init__(self, input_size, output_size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
-        self.L1 = L1
-        self.L2 = L2
         self.input_size = input_size
         self.output_size = output_size
-        self.W = utils.SharedWeights.get_or_create(weights, input_size, output_size)
+        self.W = utils.SharedWeights.get_or_create(weights, input_size, output_size, L1, L2)
 
     def forward(self, x, update = False):
         self.x = x
@@ -47,13 +43,11 @@ class MWeightLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
+        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T
         return dJdW
 
 class VWeightLayer(GenericLayer):
-    def __init__(self, size, weights ='gaussian', L1 = 0.0, L2 = 0.0):
-        self.L1 = L1
-        self.L2 = L2
+    def __init__(self, size, weights ='gaussian'):
         self.size = size
         self.W = utils.SharedWeights.get_or_create(weights, 1, size)
 
@@ -71,7 +65,7 @@ class VWeightLayer(GenericLayer):
             return np.zeros_like(self.x)
 
     def dJdW_gradient(self, dJdy):
-        return dJdy + self.L1 * np.sign(self.W.get()) + self.L2 * self.W.get()
+        return dJdy
 
 class Lock(GenericLayer):
     def __init__(self, net):

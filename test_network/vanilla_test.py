@@ -77,6 +77,10 @@ sm = SoftMaxLayer()
 
 epochs = 50
 
+# opt = GradientDescent(learning_rate=0.01),
+# opt = GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
+opt = AdaGrad(learning_rate=0.1)#,clip=100.0),
+
 display = ShowTraining(epochs_num = epochs)#, weights_list = {'Wx':v.Wxh,'Whh':v.Whh,'Why':v.Why,'by':v.by,'bh':v.bh})
 
 trainer = Trainer(show_training = True, show_function = display.show)
@@ -108,9 +112,7 @@ while True:
         zip(train,target),
         CrossEntropyLoss(),
         # NegativeLogLikelihoodLoss(),
-        # GradientDescent(learning_rate=0.01),
-        # GradientDescentMomentum(learning_rate=0.01,momentum=0.5),
-        AdaGrad(learning_rate=0.7),#,clip=100.0),
+        opt,
         epochs,
         window_size
     )

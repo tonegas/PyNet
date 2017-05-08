@@ -3,7 +3,7 @@ from itertools import izip
 
 from genericlayer import GenericLayer, WithElements
 
-class SumGroup(GenericLayer, WithElements):
+class SumGroup(WithElements, GenericLayer):
     def forward(self, x_group, update = False):
         y_group = []
         for (x, element) in izip(x_group, self.elements):
@@ -16,7 +16,7 @@ class SumGroup(GenericLayer, WithElements):
             dJdx_group.append(element.backward(dJdy, optimizer))
         return dJdx_group
 
-class MulGroup(GenericLayer, WithElements):
+class MulGroup(WithElements, GenericLayer):
     def forward(self, x_group, update = False):
         self.y_group = []
         for (x, element) in zip(x_group, self.elements):
@@ -31,7 +31,7 @@ class MulGroup(GenericLayer, WithElements):
 
         return dJdx_group
 
-class ParallelGroup(GenericLayer, WithElements):
+class ParallelGroup(WithElements, GenericLayer):
     def forward(self, x, update = False):
         y_group = []
         for element in self.elements:

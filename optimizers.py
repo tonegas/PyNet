@@ -7,7 +7,7 @@ class Optimizer(object):
         self.clip = clip
 
     def update_dW(self, weight, dJdW):
-        weight.dW += dJdW
+        weight.dW += dJdW + weight.L1 * np.sign(weight.get()) + weight.L2 * weight.get()
         self.weight_list[weight.W.ctypes.data] = weight
 
     def update_W(self, weight):

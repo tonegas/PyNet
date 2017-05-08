@@ -6,77 +6,16 @@ from utils import SharedWeights
 from network import Sequential
 from layers import  TanhLayer, LinearLayer, MWeightLayer, ComputationalGraphLayer
 from computationalgraph import MWeight, VWeight, Input, Tanh, Softmax
+from recursivenetwork import RNN
 from groupnetworks import SumGroup
-
-class NodeGenerator():
-    def __init__(self, node, *args, **kwargs):
-        self.node = node
-        self.args = args
-        self.kwargs = kwargs
-
-class RNN(GenericLayer, NodeGenerator):
-    def __init__(self, Node, *args, **kwargs):
-        NodeGenerator.__init__(self, Node, *args, **kwargs)
-        self.window_size = 0
-        self.window_step = 0
-        self.nodes = []
-        self.net = self.node(*self.args, **self.kwargs)
-        self.message_fun = {
-            'delete_nodes' : self.delete_nodes,
-            'init_nodes' : self.init_nodes,
-            'clear_memory' : self.clear_memory
-        }
-
-    def on_message(self,message,*args,**kwargs):
-        self.message_fun[message](*args,**kwargs)
-
-    def delete_nodes(self):
-        self.nodes = []
-
-    def init_nodes(self, window_size):
-        self.window_size = window_size
-        self.window_step = 0
-        self.nodes = []
-        for ind in range(window_size):
-            #self.nodes[ind].robba()
-            self.nodes.append(self.node(*self.args, **self.kwargs))
-
-    def clear_memory(self):
-        self.net.state.fill(0.0)
-        for ind in range(self.window_size):
-            self.nodes[ind].state.fill(0.0)
-            self.nodes[ind].dJdstate.fill(0.0)
-
-
-    def forward(self, x, update = False):
-        if update:
-            [y, self.nodes[self.window_step].state] = self.nodes[self.window_step].forward([x, self.nodes[self.window_step - 1].state])
-            self.window_step += 1
-            if self.window_step >= self.window_size:
-                self.window_step = 0
-            return y
-        else:
-            [y,self.net.state] = self.net.forward([x, self.net.state])
-            return y
-
-    def backward(self, dJdy, optimizer = None):
-        # print 'back'
-        self.window_step -= 1
-        if self.window_step < 0:
-            self.window_step = self.window_size-1
-        [dJdx, dJdh] = self.nodes[self.window_step].backward([dJdy, self.nodes[self.window_step].dJdstate], optimizer)
-        if self.window_step > 0:
-            self.nodes[self.window_step-1].dJdstate = dJdh
-        return dJdx
-
 
 class VanillaNet(RNN):
     def __init__(self, input_size, output_size,  memory_size, Wxh='gaussian', Whh='gaussian', Why='gaussian', bh='zeros', by='zeros'):
-        self.Wxh = SharedWeights(Wxh, input_size, memory_size)
-        self.Whh = SharedWeights(Whh, memory_size, memory_size)
-        self.Why = SharedWeights(Why, memory_size, output_size)
-        self.bh = SharedWeights(bh, 1, memory_size)
-        self.by = SharedWeights(by, 1, output_size)
+        self.Wxh = SharedWeights.get_or_create(Wxh, input_size, memory_size)
+        self.Whh = SharedWeights.get_or_create(Whh, memory_size, memory_size)
+        self.Why = SharedWeights.get_or_create(Why, memory_size, output_size)
+        self.bh = SharedWeights.get_or_create(bh, 1, memory_size)
+        self.by = SharedWeights.get_or_create(by, 1, output_size)
         RNN.__init__(self, VanillaNode, input_size, output_size,  memory_size, Wxh=self.Wxh, Whh=self.Whh, Why=self.Why, bh=self.bh, by=self.by)
 
 
@@ -92,10 +31,10 @@ class VanillaNode(GenericLayer):
         self.Why = MWeight(memory_size, output_size, weights = Why)
         self.by = VWeight(output_size, weights = by)
         self.statenet = ComputationalGraphLayer(
-                    Tanh(self.Wxh*x+self.Whh*h+self.bh)
+                    Tanh(self.Wxh.dot(x)+self.Whh.dot(h)+self.bh)
                 )
         self.outputnet = ComputationalGraphLayer(
-                    self.Why*s+self.by
+                    self.Why.dot(s)+self.by
                 )
         self.state = np.zeros(memory_size)
         self.dJdstate = np.zeros(memory_size)
@@ -104,13 +43,11 @@ class VanillaNode(GenericLayer):
         self.state = self.statenet.forward(x_h)
         self.y = self.outputnet.forward(self.state)
         return [self.y,self.state]
-        pass
 
     def backward(self, dJdy_dJdh, optimizer = None):
         dJds = self.outputnet.backward(dJdy_dJdh[0], optimizer)
         dJdx_dstate = self.statenet.backward(dJds+dJdy_dJdh[1], optimizer)
         return dJdx_dstate
-        pass
 
 class Vanilla(GenericLayer):
     def __init__(self, input_size, output_size, memory_size, window_size, Wxh='gaussian', Whh='gaussian', Why='gaussian', bh='zeros', by='zeros'):
