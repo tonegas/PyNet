@@ -31,13 +31,13 @@ time_step = 0.01
 #######################################
 
 #States with position of cart and ball
-ball_states = 5
-cart_statas = 6
-states_num = cart_statas*ball_states
+# ball_states = 5
+# cart_statas = 6
+# states_num = cart_statas*ball_states
 #######################################
 
 #States with differential position only
-# states_num = 2
+states_num = 2
 #######################################
 
 
@@ -107,41 +107,41 @@ def data_gen(t=0):
         # # print state
 
         # States with position of cart and ball
-        stateball = int(ball.p[0]/5.0*ball_states)
-        valcart = int((cart.p[0]+cart.w/2.0))
-        if valcart <= 0:
-            statecart = 0
-        elif valcart >= 5:
-            statecart = 5
-        else:
-            statecart = valcart
-        # print statecart
-        state = combine_states([stateball,statecart],[ball_states,cart_statas])
+        # stateball = int(ball.p[0]/5.0*ball_states)
+        # valcart = int((cart.p[0]+cart.w/2.0))
+        # if valcart <= 0:
+        #     statecart = 0
+        # elif valcart >= 5:
+        #     statecart = 5
+        # else:
+        #     statecart = valcart
+        # # print statecart
+        # state = combine_states([stateball,statecart],[ball_states,cart_statas])
         #########################################
 
         #States with differential position only
-        # dist = (ball.p[0]-cart.p[0])
-        # state = np.zeros(states_num)
-        # if dist < 0:
-        #     state[0] = 1 # only 2 state
-        #     # if dist <= -cart.w/2:
-        #     #     state[0] = 1
-        #     # else:
-        #     #     state[1] = 1
-        #     # elif dist <= -cart.w/2-0.15:
-        #     #     state[1] = 1
-        #     # elif dist <= -cart.w/4:
-        #     #     state[2] = 1
-        # else:
-        #     state[1] = 1 # only 2 state
-        #     # if dist >= cart.w/2:
-        #     #     state[2] = 1
-        #     # else:
-        #     #     state[1] = 1
-        #     # elif dist >= cart.w/2+0.15:
-        #     #     state[1] = 1
-        #     # elif dist >= cart.w/4:
-        #     #     state[2] = 1
+        dist = (ball.p[0]-cart.p[0])
+        state = np.zeros(states_num)
+        if dist < 0:
+            state[0] = 1 # only 2 state
+            # if dist <= -cart.w/2:
+            #     state[0] = 1
+            # else:
+            #     state[1] = 1
+            # elif dist <= -cart.w/2-0.15:
+            #     state[1] = 1
+            # elif dist <= -cart.w/4:
+            #     state[2] = 1
+        else:
+            state[1] = 1 # only 2 state
+            # if dist >= cart.w/2:
+            #     state[2] = 1
+            # else:
+            #     state[1] = 1
+            # elif dist >= cart.w/2+0.15:
+            #     state[1] = 1
+            # elif dist >= cart.w/4:
+            #     state[2] = 1
         ##########################################
         # state = kon.forward([ball.p[0],cart.p[0]])
         # print(state)

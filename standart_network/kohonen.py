@@ -1,6 +1,6 @@
 import numpy as np
 from genericlayer import GenericLayer
-from utils import define_weights
+import utils
 
 
 class Kohonen(GenericLayer):
@@ -29,7 +29,7 @@ class Kohonen(GenericLayer):
             raise Exception('Type not correct!')
 
         self.learning_rate = learning_rate
-        self.W = define_weights(weights, input_size, output_size)
+        self.W = utils.define_weights(weights, input_size, output_size)
         self.btu = None
         self.weight_distance = None
         self.selected_weight = None
