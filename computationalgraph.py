@@ -33,14 +33,14 @@ class Op(object):
         return Op(SequentialMul(*[self.get() for i in range(other)]))
 
     def __mul__(self, other):
-        if isinstance(self, MWeight):
-            return Op(Sequential(other.get(),self.get()))
+        # if isinstance(self, MWeight):
+        #     return Op(Sequential(other.get(),self.get()))
 
         if isinstance(other, Input) or isinstance(other, Op):
             if isinstance(self.net, SequentialMul):
                 return Op(self.net.add(other.get()))
-            if isinstance(self.net, Sequential):
-                return Op(Sequential(other.get(),self.get()))
+            # if isinstance(self.net, Sequential) and isinstance(other, MWeight):
+            #     return Op(Sequential(other.get(),self.get()))
             return Op(SequentialMul(self.get(),other.get()))
 
         elif isinstance(other, int) or isinstance(other, float):
@@ -50,6 +50,12 @@ class Op(object):
 
         else:
             raise Exception('Type is not supported!')
+
+    def dot(self, operation):
+        if isinstance(self.get(),Sequential):
+            return Op(self.get().insert(0, operation.get()))
+        else:
+            return Op(Sequential(operation.get(),self.get()))
 
     def addSequential(self, net):
         if isinstance(self.get(),Sequential):

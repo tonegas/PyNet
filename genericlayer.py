@@ -96,6 +96,13 @@ class WithElements:
         for element in args:
             self.add(element)
 
+    def insert(self, index, element):
+        if inspect.isclass(element):
+            element = element()
+
+        self.elements.insert(index, element)
+        return self
+
     def add(self, element):
         if inspect.isclass(element):
             element = element()

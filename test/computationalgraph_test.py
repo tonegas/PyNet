@@ -100,7 +100,7 @@ class ComputationGraphTests(unittest.TestCase):
         x = Input(['x'],'x')
         Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2]])
         W = MWeight(3, 2, weights = Wv)
-        net = ComputationalGraphLayer(W*x)
+        net = ComputationalGraphLayer(W.dot(x))
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
         assert_almost_equal(out,Wv.dot(xv))
@@ -114,7 +114,7 @@ class ComputationGraphTests(unittest.TestCase):
         W1 = MWeight(3, 2, weights = Wv1)
         W2 = MWeight(2, 4, weights = Wv2)
         W3 = MWeight(4, 3, weights = Wv3)
-        net = ComputationalGraphLayer(W3*W2*W1*x)
+        net = ComputationalGraphLayer(W3.dot(W2).dot(W1).dot(x))
         out = net.forward(xv)
         self.assertEqual(out.shape,(3,))
         assert_almost_equal(out,Wv3.dot(Wv2).dot(Wv1).dot(xv))
@@ -122,7 +122,7 @@ class ComputationGraphTests(unittest.TestCase):
         self.assertEqual(dJdy.shape,(3,))
         assert_almost_equal(dJdy,np.sum(Wv3.dot(Wv2).dot(Wv1),0))
 
-        net = ComputationalGraphLayer(W3*(W2*(W1*x)))
+        net = ComputationalGraphLayer(W3.dot(W2.dot(W1.dot(x))))
         out = net.forward(xv)
         self.assertEqual(out.shape,(3,))
         assert_almost_equal(out,Wv3.dot(Wv2.dot(Wv1.dot(xv))))
@@ -138,7 +138,7 @@ class ComputationGraphTests(unittest.TestCase):
         W = MWeight(3, 2, weights = Wv)
         bv = np.array([1.3,5.1])
         b = VWeight(2, weights = bv)
-        net = ComputationalGraphLayer(W*x+b)
+        net = ComputationalGraphLayer(W.dot(x)+b)
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
         assert_almost_equal(out,Wv.dot(xv)+bv)
@@ -161,7 +161,7 @@ class ComputationGraphTests(unittest.TestCase):
         W2 = MWeight(4, 2, weights = Wv2)
         bv = np.array([1.3,5.1])
         b = VWeight(2, weights = bv)
-        net = ComputationalGraphLayer(W1*x+b+W2*y-b)
+        net = ComputationalGraphLayer(W1.dot(x)+b+W2.dot(y)-b)
         out = net.forward(xyv)
         self.assertEqual(out.shape,(2,))
         assert_almost_equal(out,Wv1.dot(xv)+bv+Wv2.dot(yv)-bv)
@@ -179,7 +179,7 @@ class ComputationGraphTests(unittest.TestCase):
         W = MWeight(3, 2, weights = Wv)
         bv = np.array([0.3,0.1])
         b = VWeight(2, weights = bv)
-        net = ComputationalGraphLayer(Sigmoid(W*x+b))
+        net = ComputationalGraphLayer(Sigmoid(W.dot(x)+b))
         out = net.forward(xv)
         self.assertEqual(out.shape,(2,))
         check_out = 1.0/(1.0+np.exp(-Wv.dot(xv)-bv))
@@ -210,7 +210,7 @@ class ComputationGraphTests(unittest.TestCase):
         Wx = MWeight(3, 3, weights = Wxv)
         Wy = MWeight(3, 3, weights = Wyv)
 
-        net = ComputationalGraphLayer(Sigmoid(Wx*x)+Tanh(Wy*y))
+        net = ComputationalGraphLayer(Sigmoid(Wx.dot(x))+Tanh(Wy.dot(y)))
         netDict = Sequential(
             VariableDictLayer(valin),
             net
@@ -235,6 +235,63 @@ class ComputationGraphTests(unittest.TestCase):
             self.assertEqual(dJdy[key].shape,xyv[auxdict[key]].shape)
             assert_almost_equal(dJdy[key],np.sum(net.numeric_gradient(xyv)[auxdict[key]],0))
 
+    def test_complex(self):
+        xv = np.array([0.5,0.1])
+        hv = np.array([0.2,0.4,0.5])
+        cv = np.array([1.3,2.4,0.2])
+        vars2 = ['xh','c']
+        xsize = 2
+        hcsize = 3
+        xh = Input(vars2,'xh')
+        c = Input(vars2,'c')
+        Wf = MWeight(xsize+hcsize, hcsize)
+        bf = VWeight(hcsize)
+        net = Sequential(
+            VariableDictLayer(vars2),
+            ComputationalGraphLayer(
+                Sigmoid(Wf.dot(xh)+bf)*c
+            )
+        )
+        xhc = {'xh':np.hstack([xv,hv]),'c':cv}
+        out = net.forward(xhc)
+        self.assertEqual(out.shape,(3,))
+        assert_almost_equal(out,sigmoid(Wf.net.W.get().dot(np.hstack([xv,hv]))+bf.net.W.get())*cv)
+
+        vars3 = ['x','h','c']
+        x = Input(vars3,'x')#xsize
+        h = Input(vars3,'h')#hcsize
+        c = Input(vars3,'c')#hcsize
+        Wf = MWeight(xsize+hcsize, hcsize)
+        bf = VWeight(hcsize)
+        net = Sequential(
+            VariableDictLayer(vars3),
+            ComputationalGraphLayer(
+                Sigmoid(Wf.dot(Concat([x,h]))+bf)*c
+            )
+        )
+        print net
+        xhc = {'x':xv,'h':hv,'c':cv}
+        out = net.forward(xhc)
+        self.assertEqual(out.shape,(3,))
+        assert_almost_equal(out,sigmoid(Wf.net.W.get().dot(np.hstack([xv,hv]))+bf.net.W.get())*cv)
+
+
+        # vars = ['x','h','c']
+        # xsize = 2
+        # hcsize = 3
+        # x = Input(vars,'x')#xsize
+        # h = Input(vars,'h')#hcsize
+        # c = Input(vars,'c')#hcsize
+        #
+        # # net = Sequential(
+        # #     VariableDictLayer(vars),
+        # #     ComputationalGraphLayer(
+        # #         Sigmoid(Wf*Concat([x,h])+bf)*c
+        # #     )
+        # # )
+        # # print net
+
+
     def test_concat(self):
         xv = np.array([0.5,0.1,0.5])
         yv = np.array([0.2,0.4,0.5,7.0])
@@ -245,12 +302,10 @@ class ComputationGraphTests(unittest.TestCase):
         Wxv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2],[2.2,5.2,4.2]])
         Wx = MWeight(3, 3, weights = Wxv)
 
-        net = ComputationalGraphLayer(Concat([Wx*x,y]))
-        print net
+        net = ComputationalGraphLayer(Concat([Wx.dot(x),y]))
         out = net.forward(xyv)
         self.assertEqual(out.shape,(7,))
         dJdy = net.backward(np.array([1.0,1.0,1.0,1.0,1.0,1.0,1.0]))
-        print dJdy
         self.assertEqual(len(dJdy),2)
         gradvett = [np.sum(Wxv,0),np.array([1.0,1.0,1.0,1.0])]
         for ind,element in enumerate(dJdy):
@@ -269,7 +324,7 @@ class ComputationGraphTests(unittest.TestCase):
         Wv = np.array([[2.1,3.1,2.2],[2.2,3.2,4.2],[2.2,5.2,4.2]])
         W = MWeight(3, 3, weights = Wv)
 
-        net = ComputationalGraphLayer(W*(W*x+W*y))
+        net = ComputationalGraphLayer(W.dot(W.dot(x)+W.dot(y)))
         out = net.forward(xyv)
         self.assertEqual(out.shape,(3,))
         assert_almost_equal(out,Wv.dot(Wv.dot(xv)+Wv.dot(yv)))

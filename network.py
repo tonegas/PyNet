@@ -68,6 +68,7 @@ class SequentialMul(GenericLayer, WithElements):
         x_group = []
         for element in self.elements:
             x_group.append(element.forward(x, update))
+
         self.x = np.array(x_group)
         return np.prod(self.x,0)
 

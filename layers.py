@@ -233,6 +233,7 @@ class VariableDictLayer(GenericLayer):
 
     def forward(self, x_dict, update = False):
         self.x = x_dict
+        # print [self.x[var] for var in self.variables]
         return [self.x[var] for var in self.variables]
 
     def backward(self, dJdy, optimizer = None):
