@@ -187,6 +187,26 @@ class RandomGaussianLayer(GenericLayer):
     def backward(self, dJdy, optimizer = None):
         return dJdy
 
+class RandomChoice(GenericLayer):
+    def forward(self, x, update = False):
+        self.x = x
+        return utils.to_one_hot_vect(np.random.choice(range(x.size), p=x.ravel()),x.size)
+
+    def backward(self, dJdy, optimizer = None):
+        return dJdy
+
+# class HotVect(GenericLayer):
+#     def __init__(self, size = 1):
+#         self.size = size
+#
+#     def forward(self, x, update = False):
+#         self.x = x
+#         return utils.to_one_hot_vect(x,self.size)
+#
+#     def backward(self, dJdy, optimizer = None):
+#         dJdx = np.zeros(dJdy.size)
+#         dJdx[self.x] = dJdy[self.x]
+
 #############################################################################################
 ############################### Layer for Computational Graph ###############################
 

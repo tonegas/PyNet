@@ -100,3 +100,8 @@ class Concat(Op):
     def __init__(self, operation_list):
         super(Concat,self).__init__(ParallelGroup([operation.get() for operation in operation_list]))
         self.addSequential(layers.ConcatLayer())
+
+# class HotVect(Op):
+#     def __init__(self, operation):
+#         super(HotVect,self).__init__(operation.get())
+#         self.addSequential(layers.HotVect())

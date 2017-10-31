@@ -18,8 +18,16 @@ print 'data has %d characters, %d unique.' % (data_size, vocab_size)
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
 
+train = []
+target = []
+for ind in range(5000):
+    o = map(int,np.random.rand(10)*100+1)
+    train.append(np.hstack([o,np.zeros(9)]))
+    target.append(np.hstack([np.zeros(9),np.sort(o)]))
+
+vocab_size = 100
 hidden_size = 50
-window_size = 25
+window_size = 19
 
 Wi = SharedWeights('gaussian', vocab_size+hidden_size, hidden_size, L2=0.0001)
 Wf = SharedWeights('gaussian', vocab_size+hidden_size, hidden_size, L2=0.0001)

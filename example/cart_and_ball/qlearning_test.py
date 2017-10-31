@@ -56,7 +56,7 @@ else:
     #     'distance',
     #     radius = 2
     # )
-    # agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
+    agent = Agent(states_num, 2, policy='gaussian', learning_rate=0.2, gamma=0.95)
     # agent = Ase(states_num,0.8)
     agent = AseAce(states_num,0.8)
 

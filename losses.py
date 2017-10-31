@@ -1,6 +1,20 @@
 import numpy as np
 from genericlayer import GenericLayer
 
+class HuberLoss(GenericLayer):
+    def __init__(self, delta = 1):
+        self.delta = 1
+
+    def forward(self, x, update = False):
+        return self.loss(x, self.t)
+
+    def loss(self, y, t):
+        self.t = t
+        return np.array([0.5*(ti-yi)**2 if np.abs(yi) <= self.delta else self.delta*(np.abs(ti-yi)-1/2*self.delta) for (ti,yi) in zip(y,t)])
+
+    def dJdy_gradient(self, y, t):
+        return np.array([(yi - ti) if np.abs(yi) <= self.delta else -self.delta*np.sign(ti-yi) for (ti,yi) in zip(y,t)])
+
 
 class SquaredLoss(GenericLayer):
     def forward(self, x, update = False):

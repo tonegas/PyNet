@@ -12,9 +12,9 @@ time_end = 100000
 time_step = 0.01
 
 from trainer import Trainer
-from losses import NegativeLogLikelihoodLoss, SquaredLoss
+from losses import HuberLoss, SquaredLoss
 from optimizers import GradientDescent, GradientDescentMomentum, AdaGrad
-from qlearning import GenericAgent
+from qlearning import DeepAgent
 
 # l = LinearLayer(2,5)
 # s = SoftMaxLayer()
@@ -39,20 +39,21 @@ from qlearning import GenericAgent
 # print n.forward(np.array([1,2]))
 
 from network import Sequential
-from layers import SoftMaxLayer, LinearLayer, TanhLayer, NormalizationLayer, RandomGaussianLayer
+from layers import  TanhLayer, LinearLayer, ReluLayer, NormalizationLayer
 
 interval = 0
 load = 1
 
 if load == 1:
-    agent = GenericLayer.load('genericagent.net')
-    W1 = agent.model.elements[1].W
-
-    # W2 = agent.model.elements[3].W
+    agent = GenericLayer.load('deepagent.net')
+    W1 = agent.Q.elements[1].W
+    # W2 = agent.Q.elements[3].W
+    W3 = agent.Q_hat.elements[1].W
+    # W4 = agent.Q_hat.elements[3].W
     from printers import Printer2D
     p = Printer2D()
-    # p.print_model(2,agent.model,np.array([[0,0],[5.0,5.0]]))
-    p.draw_decision_surface(5,agent.model,np.array([[0,0],[5.0,5.0]]))
+    #p.print_model(2,agent.Q,np.array([[0,0],[5.0,5.0]]))
+    p.draw_decision_surface(10,agent.Q,np.array([[0,0],[5.0,5.0]]))
     plt.show()
 else:
     # norm = NormalizationLayer(
@@ -70,82 +71,103 @@ else:
     norm = NormalizationLayer(
         np.array([0.0,0.0]),
         np.array([5.0,5.0]),
-        np.array([-1.0,-1.0]),
+        np.array([0.0,0.0]),
         np.array([1.0,1.0])
     )
-    W1 = utils.SharedWeights('gaussian',2+1,4)
-    # W2 = utils.SharedWeights('gaussian',3+1,2)
-    n = Sequential(
+    W1 = utils.SharedWeights('gaussian',2+1,2)
+    W2 = utils.SharedWeights('gaussian',2+1,3)
+    Q = Sequential(
         norm,
-        LinearLayer(2,4,weights=W1),
-        # TanhLayer,
-        # #AddGaussian(1),
-        # LinearLayer(3,2,weights=W2),
-        RandomGaussianLayer(1),
-        SoftMaxLayer
+        LinearLayer(2,2,weights=W1),
+        TanhLayer,
+        LinearLayer(2,3,weights=W2),
+        # TanhLayer
     )
-    agent = GenericAgent(n,4,25,0.0)
+    W3 = utils.SharedWeights('gaussian',2+1,2)
+    W4 = utils.SharedWeights('gaussian',2+1,3)
+    # W3 = utils.SharedWeights(np.array([[10.0,-10.0,0.0],[-10.0,10.0,0.0]]),2+1,2)
+    #W2 = utils.SharedWeights('gaussian',2+1,2)
+    Q_hat = Sequential(
+        norm,
+        LinearLayer(2,2,weights=W3),
+        ReluLayer,
+        LinearLayer(2,3,weights=W4),
+        # TanhLayer
+    )
+    #Q, Q_hat, replay_memory_size, minibatch_size = 100, learning_rate = 0.1, gamma = 0.95, policy = 'esp-greedy', epsilon = 0.3
+    agent = DeepAgent(Q,Q_hat, 1000, minibatch_size = 100, policy = 'eps-greedy')
     agent.set_training_options(
         Trainer(show_training=True),
-        NegativeLogLikelihoodLoss(),
-        GradientDescentMomentum(learning_rate=0.1, momentum=0.5) #GradientDescent(learning_rate=0.2)
+        SquaredLoss(),
+        # GradientDescent(learning_rate=0.001)
+        GradientDescentMomentum(learning_rate=0.1, momentum=0.2, clip=1) #
     )
 
+J_train_list = []
+dJdy_list = []
 def data_gen(t=0):
     cart = Cart()
     ball = Ball()
     catches = 0
     for ind,time in enumerate(np.linspace(0,time_end,time_end/time_step)):
         # print time
-        ball.step(time_step, cart)
 
         state = np.array([ball.p[0],cart.p[0]]) #,ball.p[1],ball.v[0]])
+        ind_command = agent.forward(state)
+        if ind_command == 0:
+            command = 1
+        elif ind_command == 1:
+            command = -1
+        elif ind_command == 2:
+            command = 0
+        # elif ind_command == 3:
+        #     command = 0
+        cart.step(time_step, command)
+        ball.step(time_step, cart)
+        state = np.array([ball.p[0],cart.p[0]])
+
         #print state
         if ball.lose == 0:
             if ball.catch:
-                agent.reinforcement(state,1)
                 catches += 1
                 # print 'catch'
 
                 if catches > 10:
                     cart = Cart()
                     ball = Ball()
-                    agent.clear()
                     catches = 0
 
+                J, dJdy = agent.reinforcement(state,1,catches==0)
+            else:
+                J, dJdy = agent.reinforcement(state,0,False)
             # if ball.side == 1:
             #     agent.reinforcement(np.argmax(state),-0.)
-            ind_command = np.argmax(agent.reinforcement(state,0))
-            #print ind_command
-            command = 0
-            if ind_command == 0:
-                command = 1
-            elif ind_command == 1:
-                command = -1
-            elif ind_command == 2:
-                command = 0
-            elif ind_command == 3:
-                command = 0
+
+
 
             # if cart.lose == 1:
             #     cart.lose = 0
             #     agent.reinforcement(state,-0.2)
-
-            cart.step(time_step, command)
         else:
-            # print 'boing'
-            agent.reinforcement(state,-1)
+            J, dJdy = agent.reinforcement(state,-1,True)
             catches = 0
             cart = Cart()
             ball = Ball()
-            agent.clear()
 
+        J_train_list.append(J)
+        dJdy_list.append(dJdy)
+
+
+        # print W1.get()
         if int(ind%1000) == 0:
-            print W1.get()
+            print 't:'+str(time)+' J_train:'+str(J_train_list[ind])+' dJdy_list:'+str(dJdy_list[ind])
+            #W3.W = W1.W.copy()
+            print W1.W
+            # W4.W = W2.W.copy()
             #print (np.max(W1.get()),np.max(W2.get()))
             # print agent.net.elements[1].W
             # print np.max(agent.model.elements[1].W)
-            agent.save('genericagent.net')
+            agent.save('deepagent.net')
         yield (cart,ball)
 
 fig = plt.figure(1)

@@ -77,8 +77,10 @@ class Printer2D():
         return map(lambda x: model.forward(x), xs)
 
     def draw_decision_surface(self, figure_ind, model, data):
-        max = np.max([i[0] for i in data],0)
-        min = np.min([i[0] for i in data],0)
+        # max = np.max([i[0] for i in data],0)
+        # min = np.min([i[0] for i in data],0)
+        max = np.max(data,0)
+        min = np.min(data,0)
         x_range = np.linspace(min[0]-0.5,max[0]+0.5,100)
         y_range = np.linspace(min[1]-0.5,max[1]+0.5,100)
         X, Y = np.meshgrid(x_range, y_range)
@@ -88,6 +90,7 @@ class Printer2D():
         plt.figure(figure_ind)
         plt.set_cmap(plt.cm.Paired)
         plt.pcolormesh(X, Y, Z)
+        plt.colorbar()
 
     def print_model(self, figure_ind, model, x_list, print_layers = None):
         max = np.max(x_list,0)

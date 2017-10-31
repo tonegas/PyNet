@@ -1,8 +1,10 @@
 import numpy as np
 import collections
+import random
 
 import layers
 import utils
+
 
 
 class Ase(layers.GenericLayer):
@@ -108,6 +110,8 @@ class Agent(layers.GenericLayer):
         self.Q[self.y,self.x] += self.learning_rate*(r+self.gamma*np.max(self.Q[:,np.argmax(x)])-self.Q[self.y,self.x])
         return self.forward(x)
 
+#Generic Agent
+#When the agent receive a reward, it performs a training.
 class GenericAgent(layers.GenericLayer):
     def __init__(self, model, action_size, memory_size, pole):
         self.model = model
@@ -159,6 +163,7 @@ class GenericAgent(layers.GenericLayer):
             # print np.argmax(self.command_history,axis=1)
             if r != 0:
                 self.target = r*np.multiply(self.e,np.array(self.command_history))
+                # self.target = r*np.array(self.command_history)
                 self.trainer.learn_minibatch(
                     self.model,
                     zip(self.states_history,self.target),
@@ -173,3 +178,123 @@ class GenericAgent(layers.GenericLayer):
         self.command_history.clear()
 
 
+#Appunti
+#Q function e' la rete quindi io mi posso salvare lo stato che e' un input
+#e poi l'uscita mi da l'azione migliore trovata fino a quel momento
+class DeepAgent(layers.GenericLayer):
+    def __init__(self, Q, Q_hat, replay_memory_size, minibatch_size = 100, learning_rate = 0.1, gamma = 1, policy = 'eps-greedy', epsilon = 0.3, sigma = 0.5):
+        self.Q = Q
+        self.Q_hat = Q_hat
+        self.D_size = replay_memory_size
+        self.D = collections.deque(maxlen = replay_memory_size)
+        self.minibatch_size = minibatch_size
+        self.learning_rate = learning_rate
+        self.epsilon = epsilon
+        self.gamma = gamma
+        self.sigma = sigma
+        self.x = 0
+        self.Q_out = 0
+        self.action = 0
+        self.policies = {
+            'greedy' : self.greedy,
+            'eps-greedy' : self.eps_greedy,
+            'gaussian' : self.gaussian,
+            'softmax' : self.softmax
+        }
+        self.policy = self.policies.get(policy)
+
+    def greedy(self, x):
+        self.Q_out =  self.Q.forward(x)
+        self.action = np.argmax(self.Q_out)
+        return self.action
+
+    def eps_greedy(self, x):
+        self.Q_out = self.Q.forward(x)
+        if np.random.rand(1,1) < self.epsilon:
+            self.action = int(np.random.rand(1,1)*self.Q_out.size)
+        else:
+            self.action = np.argmax(self.Q_out)
+        return self.action
+
+    def gaussian(self, x):
+        self.Q_out = self.Q.forward(x)
+        self.action = np.argmax(self.Q_out+np.random.normal(0,self.sigma,size=self.Q_out.size))
+        return self.action
+
+    def softmax(self, x):
+        raise Exception('Not Implemented!')
+
+    def set_training_options(self, trainer, loss, optimiser):
+        self.trainer = trainer
+        self.loss = loss
+        self.optimiser = optimiser
+
+    #sei in uno stato, valuti tutte le possibili mosse che possono essere fatte
+    #per ogni mossa chiami la rete e ottieni la probabilita di vittoria
+    #te la salvi in un vettore azioni
+    def forward(self, x, update = False):
+        self.x = x
+        self.action = self.policy(self.x)
+        return self.action
+
+    def reinforcement(self, x, r, done):
+        self.D.append((self.x, self.action, r, x, done))
+        J_train_list = 0
+        dJdy_list = 0
+        if len(self.D) < self.minibatch_size:
+            return J_train_list, dJdy_list
+
+        minibatch = random.sample(self.D, self.minibatch_size)
+        #y is the target of the loss function
+        y = []
+        Q_out = []
+        states = []
+        for state, action, reward, next_state, done, in minibatch:
+            states.append(state)
+            #y_val = self.Q_hat.forward(state)
+            Q_out_val = self.Q.forward(state)#*utils.to_one_hot_vect(action,self.Q_out.size)
+            Q_out.append(Q_out_val)
+            if done == False:
+                # yj = r(t) + gamma * max_action(Q_hat(x(t+1),action))
+                yj = reward + self.gamma * np.max(self.Q.forward(next_state))
+            else:
+                # yj = r(t)
+                yj = reward
+            # yj = self.Q_hat.forward(next_state)
+            y_val = Q_out_val.copy()
+            y_val[action] = yj
+            # print (Q_out_val,y_val,action,yj)
+            # y_val = yj*utils.to_one_hot_vect(action,self.Q_out.size)
+            y.append(y_val)
+
+        # J_train_list, dJdy_list = self.trainer.learn_minibatch(
+        #     self.Q,
+        #     zip(states,y),
+        #     self.loss,
+        #     self.optimiser,
+        # )
+
+            J = self.loss.loss(Q_out_val,y_val)/self.minibatch_size
+            dJdy = self.loss.dJdy_gradient(Q_out_val,y_val)/self.minibatch_size
+            self.Q.backward(dJdy, self.optimiser)
+
+            J_train_list += np.linalg.norm(J)
+            dJdy_list += np.linalg.norm(dJdy)
+
+        self.optimiser.update_model()
+
+
+        #print len(states)
+        # print (np.array(y),np.array(Q_out))
+        # print np.max(np.array(y)-np.array(Q_out))
+        #y = [minibatch[2][ind] + self.gamma * np.max(self.Q_hat.forward(minibatch[3][ind])) if done == 0 else minibatch[2][ind] for ind,done in enumerate(minibatch[4])]
+
+        # states = np.random.rand(100,2)
+        # y = []
+        # for x in states:
+        #     y.append(self.Q_hat.forward(x))
+
+
+
+
+        return J_train_list, dJdy_list

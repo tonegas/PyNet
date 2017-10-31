@@ -59,7 +59,7 @@ class SharedWeights():
         if isinstance(weights, SharedWeights):
             return weights
         else:
-            return SharedWeights(weights, input_size, output_size, L1 = 0.0, L2 = 0.0)
+            return SharedWeights(weights, input_size, output_size, L1, L2)
 
     def T(self):
         out = SharedWeights(self)
