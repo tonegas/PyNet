@@ -69,16 +69,16 @@ from printers import ShowTraining
 #         )
 #     )
 
-epochs = 100
+epochs = 200
 
 #equal to
 varx = Input('x','x')
-a = VWeight(1,L2=0.001,weights=np.array([10.0]))
-b = VWeight(1,L2=0.001,weights=np.array([10.0]))
-c = VWeight(1,L2=0.001,weights=np.array([10.0]))
-# a = VWeight(1,weights=np.array([10.0]))
-# b = VWeight(1,weights=np.array([10.0]))
-# c = VWeight(1,weights=np.array([10.0]))
+#a = VWeight(1,L2=0.001,weights=np.array([10.0]))
+#b = VWeight(1,L2=0.001,weights=np.array([10.0]))
+#c = VWeight(1,L2=0.001,weights=np.array([10.0]))
+a = VWeight(1,weights=np.array([10.0]))
+b = VWeight(1,weights=np.array([10.0]))
+c = VWeight(1,weights=np.array([10.0]))
 # x = Input(lv,'x')
 n = ComputationalGraphLayer(a*varx**2+b*varx+c)
 
@@ -157,4 +157,4 @@ plt.show()
 #
 # plt.show()
 
-raw_input('Press ENTER to exit')
+input('Press ENTER to exit')

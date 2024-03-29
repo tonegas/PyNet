@@ -1,5 +1,4 @@
 import numpy as np
-from itertools import izip
 from genericlayer import GenericLayer, WithElements, WithNet
 
 class Sequential(WithElements, GenericLayer):
@@ -55,7 +54,7 @@ class SequentialSum(WithElements, GenericLayer):
 
     def backward(self, dJdy, optimizer = None):
         aux_dJdx = []
-        for (x, element) in izip(self.x_group, self.elements):
+        for (x, element) in zip(self.x_group, self.elements):
             aux_dJdx.append(element.backward(np.ones(x.size)*dJdy, optimizer))
         return np.sum(np.array(aux_dJdx),0)
 
@@ -78,7 +77,7 @@ class SequentialMul(WithElements, GenericLayer):
             dJdx.append(np.prod(np.delete(self.x,i,0),0))
         dJdx_group = np.array([element*dJdy for element in dJdx])
         aux_dJdx = []
-        for (dJdx, element) in izip(dJdx_group, self.elements):
+        for (dJdx, element) in zip(dJdx_group, self.elements):
             aux_dJdx.append(element.backward(dJdx, optimizer))
         return np.sum(np.array(aux_dJdx),0)
 

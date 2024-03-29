@@ -56,7 +56,7 @@ class Trainer():
                 if self.show_function is not None:
                     self.show_function(epoch, J_train_list, dJdy_list)
                 else:
-                    print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])
+                    print(f'Epoch: {epoch} J_train: {J_train_list[epoch]}')
 
         return J_train_list, dJdy_list
 
@@ -106,14 +106,14 @@ class Trainer():
                     if self.show_function is not None:
                         self.show_function(epoch, J_train_list, dJdy_list, J_test_list)
                     else:
-                        print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])+' J_test:'+str(J_test_list[epoch])
+                        print(f'Epoch: {epoch} J_train: {J_train_list[epoch]} J_test: {J_test_list[epoch]}')
 
             else:
                 if self.show_training:
                     if self.show_function is not None:
                         self.show_function(epoch, J_train_list, dJdy_list)
                     else:
-                        print 'Epoch:'+str(epoch)+' J_train:'+str(J_train_list[epoch])
+                        print(f'Epoch: {epoch} J_train: {J_train_list[epoch]}')
 
         if test:
             return J_train_list, dJdy_list, J_test_list

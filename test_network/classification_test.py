@@ -39,8 +39,8 @@ def gen_data():
 
     targets = [to_one_hot_vect(target,num_classes) for target in targets]
 
-    train = zip(np.array(data[:n *9/10]).astype(np.float), np.array(targets[:n *9/10]).astype(np.float))
-    test = zip(np.array(data[n /10:]).astype(np.float), np.array(targets[n /10:]).astype(np.float))
+    train = list(zip(np.array(data[:int(n*9/10)]).astype(np.float64), np.array(targets[:int(n*9/10)]).astype(np.float64)))
+    test = list(zip(np.array(data[int(n/10):]).astype(np.float64), np.array(targets[int(n/10):]).astype(np.float64)))
 
 
     return train, test
@@ -117,7 +117,7 @@ J_train_list, dJdy_list, J_test_list = trainer.learn(
 
 
 elapsed = time.time() - t
-print 'Training time: '+str(elapsed)
+print(f'Training time: {elapsed}')
 
 y1 = []
 for i, (x,target) in enumerate(train):
@@ -135,6 +135,7 @@ p.compare_data(10, train, y1, num_classes, colors, classes)
 p.compare_data(10, test, y2, num_classes, colors, classes)
 plt.title('After Training')
 plt.figure(11)
+plt.show()
 
 # print_data(2, train_data, train_targets, ['gray','gray','gray','gray'], classes)
 # print_data(2, test_data, test_targets, ['gray','gray','gray','gray'], classes)
@@ -142,6 +143,6 @@ plt.figure(11)
 # print_data(2, test_data, y2, colors, ['.','.','.','.'])
 # plt.title('After Training')
 
-raw_input('Press ENTER to exit')
+input('Press ENTER to exit')
 
 

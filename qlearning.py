@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import collections
 import random
@@ -20,7 +22,7 @@ class Ase(layers.GenericLayer):
         self.x = x
         self.y = np.sign(self.W.dot(x)+np.random.normal(0,self.sigma))
         self.e = self.delta*self.e+(1-self.delta)*self.y*self.x
-        return utils.to_one_hot_vect(self.y/2.0+1.0,2)
+        return utils.to_one_hot_vect(int(self.y/2.0+1.0),2)
 
     def reinforcement(self, x, r): #r>1 success e r<1 fail
         self.W += self.learning_rate * r * self.e

@@ -7,8 +7,8 @@ class ShowTraining():
         self.fig1 = plt.figure(1)
         self.ax = self.fig1.add_subplot(111)
         self.ax.set_title('Errors History (J)')
-        self.train, = self.ax.plot(xrange(len([])), [], color='green', marker='^', label='Training')
-        self.test, = self.ax.plot(xrange(len([])), [], color='blue', marker='s', label='Test')
+        self.train, = self.ax.plot(range(len([])), [], color='green', marker='^', label='Training')
+        self.test, = self.ax.plot(range(len([])), [], color='blue', marker='s', label='Test')
         self.ax.set_xlabel('Epochs')
         self.ax.set_ylabel(r'$||J||_2/N$')
         self.ax.legend()
@@ -18,7 +18,7 @@ class ShowTraining():
         self.fig2 = plt.figure(2)
         self.ax2 = self.fig2.add_subplot(111)
         self.ax2.set_title('Loss Gradient History (dJ/dy)')
-        self.dJdy, = self.ax2.plot(xrange(len([])), [], color='red', marker='o')
+        self.dJdy, = self.ax2.plot(range(len([])), [], color='red', marker='o')
         self.ax2.set_xlabel('Epochs')
         self.ax2.set_ylabel(r'$||\delta J/\delta y||_2/N$')
         if epochs_num is not None:
@@ -32,28 +32,28 @@ class ShowTraining():
             self.ax3.set_title('Weights Norm2')
             for weight in weights_list:
                 self.weights.append(weights_list[weight])
-                line, = self.ax3.plot(xrange(len([])), [],  marker='o', label=weight)
+                line, = self.ax3.plot(range(len([])), [],  marker='o', label=weight)
                 self.weightsline.append(line)
             self.ax3.set_xlabel('Epochs')
             self.ax3.set_ylabel(r'$||W_i||_2$')
             if epochs_num is not None:
                 self.ax3.set_xlim([0,epochs_num])
-        self.ax3.legend()
+            self.ax3.legend()
         plt.ioff()
 
     def show(self, epoch, J_train_list, dJdy_list = None, J_test_list = None):
         plt.ion()
-        self.train.set_xdata(xrange(len(J_train_list[:epoch+1])))
+        self.train.set_xdata(range(len(J_train_list[:epoch+1])))
         self.train.set_ydata(J_train_list[:epoch+1])
         if J_test_list is not None:
-            self.test.set_xdata(xrange(len(J_test_list[:epoch+1])))
+            self.test.set_xdata(range(len(J_test_list[:epoch+1])))
             self.test.set_ydata(J_test_list[:epoch+1])
             self.ax.set_ylim([0,max(max(J_train_list)+max(J_train_list)*0.1,max(J_test_list)+max(J_test_list)*0.1)])
         else:
             self.ax.set_ylim([0,max(J_train_list)+max(J_train_list)*0.1])
         self.fig1.canvas.draw()
 
-        self.dJdy.set_xdata(xrange(len(dJdy_list[:epoch+1])))
+        self.dJdy.set_xdata(range(len(dJdy_list[:epoch+1])))
         self.dJdy.set_ydata(dJdy_list[:epoch+1])
         self.ax2.set_ylim([min(dJdy_list)-min(dJdy_list)*0.1,max(dJdy_list)+max(dJdy_list)*0.1])
         self.fig2.canvas.draw()
@@ -64,7 +64,7 @@ class ShowTraining():
             for weight,weightline in zip(self.weights,self.weightsline):
                 if epoch == 0:
                     weightline.set_ydata([])
-                weightline.set_xdata(xrange(len(dJdy_list[:epoch+1])))
+                weightline.set_xdata(list(range(len(dJdy_list[:epoch+1]))))
                 weightline.set_ydata(np.append(weightline.get_ydata(),np.linalg.norm(weight.get())))
                 minval = minval if minval < min(weightline.get_ydata()) else min(weightline.get_ydata())
                 maxval = maxval if maxval > max(weightline.get_ydata()) else max(weightline.get_ydata())
@@ -74,21 +74,23 @@ class ShowTraining():
 
 class Printer2D():
     def forward_all(self, model, xs):
-        return map(lambda x: model.forward(x), xs)
+        return list(map(lambda x: model.forward(x), xs))
 
     def draw_decision_surface(self, figure_ind, model, data):
         # max = np.max([i[0] for i in data],0)
         # min = np.min([i[0] for i in data],0)
-        max = np.max(data,0)
-        min = np.min(data,0)
-        x_range = np.linspace(min[0]-0.5,max[0]+0.5,100)
-        y_range = np.linspace(min[1]-0.5,max[1]+0.5,100)
+        maxLim = np.max(data,0)
+        minLim = np.min(data,0)
+        x_range = np.linspace(minLim[0,0]-0.5,maxLim[0,0]+0.5,100)
+        y_range = np.linspace(minLim[0,1]-0.5,maxLim[0,1]+0.5,100)
         X, Y = np.meshgrid(x_range, y_range)
-        Z = np.argmax(self.forward_all(model, np.c_[X.ravel(), Y.ravel()]), axis=1)
+        vect_of_sample = np.c_[X.ravel(), Y.ravel()]
+        array_of_res = np.array(self.forward_all(model, vect_of_sample))
+        Z = np.argmax(array_of_res,axis=1)
         Z = Z.reshape(X.shape)
         # cs = plt.contourf(xx, yy, Z, cmap='Paired')
         plt.figure(figure_ind)
-        plt.set_cmap(plt.cm.Paired)
+        #plt.set_cmap(plt.cm.Paired)
         plt.pcolormesh(X, Y, Z)
         plt.colorbar()
 
@@ -122,7 +124,7 @@ class Printer2D():
 
 
     def compare_data(self, figure_ind, train, output, num_classes, colors, classes):
-        xy = range(num_classes)
+        xy = list(range(num_classes))
         for type in range(num_classes):
             xy[type] = []
 
