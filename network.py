@@ -49,14 +49,14 @@ class SequentialSum(WithElements, GenericLayer):
         self.x_group = []
         for element in self.elements:
             self.x_group.append(element.forward(x, update))
-        self.x = np.array(self.x_group)
+        self.x = np.array(self.x_group,dtype="object")
         return np.sum(self.x,0)
 
     def backward(self, dJdy, optimizer = None):
         aux_dJdx = []
         for (x, element) in zip(self.x_group, self.elements):
             aux_dJdx.append(element.backward(np.ones(x.size)*dJdy, optimizer))
-        return np.sum(np.array(aux_dJdx),0)
+        return np.sum(np.array(aux_dJdx, dtype="object"),0)
 
 class SequentialMul(WithElements, GenericLayer):
     def __init__(self, *args):
@@ -68,7 +68,7 @@ class SequentialMul(WithElements, GenericLayer):
         for element in self.elements:
             x_group.append(element.forward(x, update))
 
-        self.x = np.array(x_group)
+        self.x = np.array(x_group,dtype="object")
         return np.prod(self.x,0)
 
     def backward(self, dJdy, optimizer = None):
@@ -86,5 +86,5 @@ class SequentialNegative(WithNet):
         return -np.array(self.net.forward(x, update))
 
     def backward(self, dJdy, optimizer = None):
-        return -np.array(self.net.backward(dJdy, optimizer))
+        return -np.array(self.net.backward(dJdy, optimizer), dtype="object")
 

@@ -40,4 +40,4 @@ class ParallelGroup(WithElements, GenericLayer):
         aux_dJdx = []
         for (dJdy, element) in zip(dJdy_group, self.elements):
             aux_dJdx.append(element.backward(dJdy, optimizer))
-        return np.sum(np.array(aux_dJdx),0)
+        return np.sum(np.array(aux_dJdx,dtype="object"),0)

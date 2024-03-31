@@ -31,7 +31,7 @@ class GenericLayer(StoreNetwork):
             dJdx = []
             for ind,element in enumerate(x):
                 dJdx.append(np.zeros([fx.size,element.size]))
-                for r in xrange(element.size):
+                for r in range(element.size):
                     dxvett = np.zeros(element.size)
                     dxvett[r] = dx
                     xin = [el.copy() for el in x]
@@ -41,7 +41,7 @@ class GenericLayer(StoreNetwork):
             return dJdx
         else:
             dJdx = np.zeros([fx.size,x.size])
-            for r in xrange(x.size):
+            for r in range(x.size):
                 dxvett = np.zeros(x.size)
                 dxvett[r] = dx
                 fxdx = self.forward(x+dxvett)

@@ -269,7 +269,6 @@ class ComputationGraphTests(unittest.TestCase):
                 Sigmoid(Wf.dot(Concat([x,h]))+bf)*c
             )
         )
-        print net
         xhc = {'x':xv,'h':hv,'c':cv}
         out = net.forward(xhc)
         self.assertEqual(out.shape,(3,))

@@ -69,18 +69,14 @@ from printers import ShowTraining
 #         )
 #     )
 
-epochs = 200
-
 #equal to
 varx = Input('x','x')
-#a = VWeight(1,L2=0.001,weights=np.array([10.0]))
-#b = VWeight(1,L2=0.001,weights=np.array([10.0]))
-#c = VWeight(1,L2=0.001,weights=np.array([10.0]))
 a = VWeight(1,weights=np.array([10.0]))
 b = VWeight(1,weights=np.array([10.0]))
 c = VWeight(1,weights=np.array([10.0]))
-# x = Input(lv,'x')
 n = ComputationalGraphLayer(a*varx**2+b*varx+c)
+
+epochs = 200
 
 #
 train = []
@@ -90,11 +86,6 @@ for i,x in enumerate(np.linspace(-0.2,0.2,50)):
 test = []
 for i,x in enumerate(np.linspace(-10,10,50)):
     test.append((np.array([x]),np.array([5.2*x+7.1])))
-
-# print (train[0][0],train[0][1])
-# print n.forward(train[0][0])
-# print n.numeric_gradient(train[0][0])
-# print n.backward(np.array([1.0]))
 
 printer = ShowTraining(epochs_num = epochs, weights_list={'a':a.net.W,'b':b.net.W,'c':c.net.W})
 t = Trainer(show_training = True, show_function = printer.show)
@@ -116,7 +107,6 @@ plt.figure(4)
 plt.title('Errors History (J)')
 plt.plot(np.array([x for (x,t) in test]), np.array([t for (x,t) in test]), color='red')
 plt.plot(np.array([x for (x,t) in test]), np.array([n.forward(x) for (x,t) in test]), color='green')
-# plt.ylim([0, 2])
 plt.xlabel('x')
 plt.ylabel('y')
 

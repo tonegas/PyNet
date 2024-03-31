@@ -35,7 +35,7 @@ class LinearLayerTests(unittest.TestCase):
         dJdW = l.dJdW_gradient(np.array([1.0,2.0,3.0]))
         self.assertEqual(l.W.get().shape,(3,3))
         self.assertEqual(dJdW.shape,(3,3))
-        assert_array_equal(dJdW,np.matrix([[2.0,2.0,1.0],[4.0,4.0,2.0],[6.0,6.0,3.0]]))
+        assert_array_equal(dJdW,np.array([[2.0,2.0,1.0],[4.0,4.0,2.0],[6.0,6.0,3.0]]))
 
     def test_numeric_gradient(self):
         l = LinearLayer(2,3,'random')

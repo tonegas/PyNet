@@ -1,16 +1,11 @@
+import matplotlib; matplotlib.use("TkAgg")
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from standart_network.kohonen import Kohonen
-from printers import Printer2D
-#from sklearn import datasets
 
-classes = ["o","v","x",".","s"]
-colors = ['r', 'g', 'b', 'y', 'o']
-num_classes = 4
-n = 200
-epochs = 30
+epochs = 50
 
 start_learning_rate = 0.15
 stop_learning_rate = 0.05
@@ -31,6 +26,7 @@ model = Kohonen(
 train = [((x,y),1) for x in np.linspace(-5,5,5) for y in np.linspace(-5,5,5)]
 
 def data_gen(t=0):
+    data = []
     for epoch in range(epochs):
         np.random.shuffle(train)
         for data in train:
@@ -64,5 +60,5 @@ def run(data):
 
     return points
 
-ani = animation.FuncAnimation(fig, run, data_gen, blit=False, interval=10, repeat=False)
+ani = animation.FuncAnimation(fig, run, frames=data_gen, blit=False, interval=10, repeat=False, cache_frame_data=False)
 plt.show()

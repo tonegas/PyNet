@@ -23,7 +23,7 @@ class LinearLayer(GenericLayer):
         return dJdx
 
     def dJdW_gradient(self, dJdy):
-        dJdW = np.multiply(np.matrix(self.x).T, dJdy).T
+        dJdW = np.multiply(np.expand_dims(self.x, 0).T, dJdy).T
         return dJdW
 
 class MWeightLayer(GenericLayer):
@@ -120,7 +120,7 @@ class TanhLayer(GenericLayer):
 
 class SigmoidLayer(GenericLayer):
     def forward(self, x, update = False):
-        self.y = 1/(1+np.exp(-x))
+        self.y = 1./(1.+np.array(list(map(np.exp,-x))))
         return self.y
 
     def backward(self, dJdy, optimizer = None):
@@ -273,5 +273,5 @@ class ConcatLayer(GenericLayer):
         return np.hstack(x)
 
     def backward(self, dJdy, optimizer = None):
-        inds = np.cumsum(map(len,self.x))
+        inds = np.cumsum(list(map(len,self.x)))
         return np.split(dJdy,inds)[:-1]
